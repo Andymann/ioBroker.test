@@ -10,7 +10,7 @@ const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
 // const fs = require('fs');
-let net = require('net');
+const net = require('net');
 let matrix = null;
 
 let parentThis;
@@ -20,6 +20,8 @@ let bConnection = false;
 let bWaitingForResponse = false;
 let cmdInterval;
 let bWaitQueue = false;
+let bHasIncomingData = false;
+let in_msg = '';
 
 const cmdConnect = new Buffer([0x5a, 0xa5, 0x14, 0x00, 0x40, 0x00, 0x00, 0x00, 0x0a, 0x5d]);
 const cmdDisconnect = new Buffer([0x5a, 0xa5, 0x14, 0x01, 0x3f, 0x80, 0x00, 0x00, 0x0a, 0x5d]);
@@ -27,12 +29,63 @@ const cmdBasicResponse = new Buffer([0x5a, 0xa5, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0
 const cmdTransmissionDone = new Buffer([0x5a, 0xa5, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1, 0x0a, 0xaf]);
 const cmdWaitQueue_1000 = new Buffer([0x03, 0xe8]);
 
+//----https://gist.github.com/Jozo132/2c0fae763f5dc6635a6714bb741d152f
+const Float32ToHex = float32 => {
+	const getHex = i => ("00" + i.toString(16)).slice(-2);
+	var view = new DataView(new ArrayBuffer(4));
+	view.setFloat32(0, float32);
+	return Array.apply(null, { length: 4 })
+		.map((_, i) => getHex(view.getUint8(i)))
+		.join("");
+};
+
+const Float32ToBin = float32 =>
+	parseInt(Float32ToHex(float32), 16)
+		.toString(2)
+		.padStart(32, "0");
+const conv754 = float32 => {
+	const getHex = i => parseInt(("00" + i.toString(16)).slice(-2), 16);
+	var view = new DataView(new ArrayBuffer(4));
+	view.setFloat32(0, float32);
+	return Array.apply(null, { length: 4 }).map((_, i) => getHex(view.getUint8(i)));
+};
+
+const ToFloat32 = num => {
+	if (num > 0 || num < 0) {
+		let sign = num >>> 31 ? -1 : 1;
+		let exp = ((num >>> 23) & 0xff) - 127;
+		let mantissa = ((num & 0x7fffff) + 0x800000).toString(2);
+		let float32 = 0;
+		for (let i = 0; i < mantissa.length; i += 1) {
+			float32 += parseInt(mantissa[i]) ? Math.pow(2, exp) : 0;
+			exp--;
+		}
+		return float32 * sign;
+	} else return 0;
+};
+
+const HexToFloat32 = str => ToFloat32(parseInt(str, 16));
+const BinToFloat32 = str => ToFloat32(parseInt(str, 2));
+
+//https://gist.github.com/xposedbones/75ebaef3c10060a3ee3b246166caab56
+//---- Wert, IN von, IN bis, OUT von, OUT bis
+const map = (value, x1, y1, x2, y2) => ((value - x1) * (y2 - x2)) / (y1 - x1) + x2;
+
 function toHexString(byteArray) {
 	return Array.from(byteArray, function (byte) {
 		return ('0' + (byte & 0xff).toString(16)).slice(-2);
 	}).join('');
 }
 
+//----Rudimentaere Funktion, um syntaktisch prinzipiell korrekte Werte sichezustellen
+function simpleMap(pMinimal, pMaximal, pVal) {
+	if (pVal < pMinimal) {
+		pVal = pMinimal;
+	} else if (pVal > pMaximal) {
+		pVal = pMaximal;
+	}
+	return pVal;
+}
 
 class Test extends utils.Adapter {
 
@@ -60,7 +113,8 @@ class Test extends utils.Adapter {
 		arrCMD = [];
 		bWaitingForResponse = false;
 		bConnection = false;
-		bWaitQueue=false;
+		bWaitQueue = false;
+		bHasIncomingData = false;
 
 		//----CMD-Queue einrichten   
 		clearInterval(cmdInterval);
@@ -110,7 +164,7 @@ class Test extends utils.Adapter {
 		matrix.on('data', function (chunk) {
 			parentThis.log.info('matrix.onData()');
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
-			//parentThis._processIncoming(chunk);
+			parentThis.processIncoming(chunk);
 		});
 
 		matrix.on('timeout', function (e) {
@@ -127,7 +181,7 @@ class Test extends utils.Adapter {
 			if (e.code == 'ENOTFOUND' || e.code == 'ECONNREFUSED' || e.code == 'ETIMEDOUT') {
 				//matrix.destroy();
 				//parentThis.initMatrix();
-				if(e.code == 'ECONNREFUSED'){
+				if (e.code == 'ECONNREFUSED') {
 					parentThis.log.error('Keine Verbindung. Ist der Adapter online?');
 					arrCMD.push(cmdWaitQueue_1000);
 
@@ -157,24 +211,22 @@ class Test extends utils.Adapter {
 
 
 	processCMD() {
-		this.log.info('processCMD()');
-
-		//var bWait = false;
-		if(bWaitQueue==false){
+		this.log.debug('processCMD()');
+		if (bWaitQueue == false) {
 			if (bWaitingForResponse == false) {
 				if (arrCMD.length > 0) {
 					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
 					bWaitingForResponse = true;
 
-					let tmp = arrCMD.shift();
+					const tmp = arrCMD.shift();
 					if (tmp.length == 10) {
 						//----Normaler Befehl
 						this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
 						matrix.write(tmp);
+						bHasIncomingData = false;
 						//lastCMD = tmp;
 						//iMaxTryCounter = MAXTRIES;
 						//matrix.write(tmp);
-						//bHasIncomingData = false;
 						//clearTimeout(query);
 						//query = setTimeout(function () {
 						//	//----Es ist ander als bei der 880er: 2 Sekunden keine Antwort und das Teil ist offline
@@ -189,20 +241,20 @@ class Test extends utils.Adapter {
 						//}, OFFLINETIMER);
 						//matrix.write(tmp);
 					} else if (tmp.length == 2) {
-						let iWait = tmp[0] * 256 + tmp[1];
-						bWaitQueue=true;
+						const iWait = tmp[0] * 256 + tmp[1];
+						bWaitQueue = true;
 						this.log.debug('processCMD.waitQueue: ' + iWait.toString());
-						setTimeout(function(){ bWaitQueue=false; parentThis.log.info('processCMD.waitQueue DONE'); }, iWait);
+						setTimeout(function () { bWaitQueue = false; parentThis.log.info('processCMD.waitQueue DONE'); }, iWait);
 					} else {
 						//----Nix          
 					}
 				} else {
 					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
-				}			
+				}
 			} else {
 				this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
 			}
-		}else{
+		} else {
 			this.log.debug('processCMD: bWaitQueue==TRUE, warten');
 		}
 
@@ -211,6 +263,114 @@ class Test extends utils.Adapter {
 		//
 	}
 
+
+	processIncoming(chunk) {
+		parentThis.log.info('processIncoming(): ' + parentThis.toHexString(chunk));
+		in_msg += toHexString(chunk);
+		bHasIncomingData = true; // IrgendETWAS ist angekommen
+
+		if (bWaitingForResponse == true) {
+			if (in_msg.length >= 20 && in_msg.includes('5aa5')) {
+				let iStartPos = in_msg.indexOf('5aa5');
+				if (in_msg.toLowerCase().substring(iStartPos + 16, iStartPos + 18) == '0a') {
+					let tmpMSG = in_msg.toLowerCase().substring(iStartPos, iStartPos + 20); //Checksum
+					in_msg = in_msg.slice(20); //Die ersten 20 Zeichen abschneiden
+					parentThis.log.info('_processIncoming(); filtered:' + tmpMSG);
+					parentThis.bWaitingForResponse = false;
+					parentThis.parseMSG(tmpMSG);
+				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '11') {
+					//----5aa511c2c00000c2c00000c2c00000c2c0...
+					//----In der Regel als Antwort auf einen PING
+					parentThis.log.info('LevelMeter incoming');
+					bWaitingForResponse = false;
+				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '12') {
+					//----5aa512c2c00000c2c00000c...
+					//----In der Regel als Antwort auf einen PING
+					parentThis.log.info('Sprectrum incoming');
+					bWaitingForResponse = false;
+				} else {
+					//----Irgendwie vergniesgnaddelt
+					parentThis.log.info('AudioMatrix: matrix.on data: Fehlerhafte oder inkomplette Daten empfangen:' + in_msg);
+				}
+			}
+		} else {
+			//----Durch die PING-Mechanik kommt hier recht viel an, da muessen wir spaeter drauf schauen.
+			//parentThis.log.info('AudioMatrix: matrix.on data(): incomming aber bWaitingForResponse==FALSE; in_msg:' + in_msg);
+		}
+
+		if (in_msg.length > 120) {
+			//----Just in case
+			in_msg = '';
+		}
+	}
+
+
+	//----Daten komen von der Hardware an
+	parseMSG(sMSG) {
+		this.log.info('parseMSG():' + sMSG);
+		if (sMSG === toHexString(cmdBasicResponse)) {
+			this.log.info('parseMSG(): Basic Response.');
+
+		} else if (sMSG === toHexString(cmdTransmissionDone)) {
+			this.log.info('parseMSG(): Transmission Done.');
+			this.setState('info.connection', true, true); //Green led in 'Instances'
+
+			bConnection = true;
+			bWaitingForResponse = false;
+		} else if (sMSG.startsWith('5aa50700')) {
+			//this.log.info('_parseMSG(): received main volume from Matrix.');
+			let sHex = sMSG.substring(8, 16);
+			let iVal = HexToFloat32(sHex);
+			iVal = simpleMap(0, 100, iVal);
+			this.log.info('_parseMSG(): received main volume from Matrix. Processed Value:' + iVal.toString());
+			this.setStateAsync('mainVolume', { val: iVal, ack: true });
+		} else {
+			let sHex = sMSG.substring(4, 6);
+			let iVal = parseInt(sHex, 16);
+			if (iVal >= 1 && iVal <= 6) {
+				//----Input....
+				//this.log.info('_parseMSG(): received INPUT Value');
+				let sCmd = sMSG.substring(6, 8);
+				let iCmd = parseInt(sCmd, 16);
+				if (iCmd == 2) {
+					//----Gain
+					//this.log.info('_parseMSG(): received INPUT Value for GAIN:' + sMSG.substring(8, 16));
+					let sValue = sMSG.substring(8, 16);
+					let iValue = HexToFloat32(sValue, 16);
+					//this.log.info('_parseMSG(): received inputGain from Matrix. Original Value:' + sValue.toString());
+					iValue = map(iValue, -80, 0, 0, 100); //this.simpleMap(0, 100, iVal);
+					this.log.info('_parseMSG(): received gain for input ' + (iVal).toString() + ' from Hardware. Processed Value:' + iValue.toString());
+					//this.setStateAsync('inputGain_' + (iVal).toString(), { val: iValue, ack: true });
+				} else if ((iCmd >= 51) && (iCmd <= 58)) {
+					//this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString()  + ' OUT:' + (iCmd-50).toString());
+					let sValue = sMSG.substring(8, 16);
+					let iValue = HexToFloat32(sValue);
+					let bValue = iValue == 0 ? false : true;
+					let.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
+
+					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
+					while (sID.length < 2) sID = '0' + sID;
+					//routingNode_ID_' + sID + '__IN_' + (inVal + 1).toString() + '_OUT_' + (outVal + 1).toString()
+					//this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
+				}
+			} else if (iVal >= 7 && iVal <= 14) {
+				//----Output....
+				//this.log.info('_parseMSG(): received OUTPUT Value');
+				let sCmd = sMSG.substring(6, 8);
+				let iCmd = parseInt(sCmd, 16);
+				if (iCmd == 2) {
+					//----Gain
+					//this.log.info('_parseMSG(): received OUTPUT Value for GAIN:' + sMSG.substring(8, 16));
+					let sValue = sMSG.substring(8, 16);
+					let iValue = HexToFloat32(sValue, 16);
+					//this.log.info('_parseMSG(): received outputGain from Matrix. Original Value:' + sValue.toString());
+					iValue = map(iValue, -80, 0, 0, 100); //this.simpleMap(0, 100, iVal);
+					this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
+					//this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
+				}
+			}
+		}
+	}
 
 	//==================================================================================
 
