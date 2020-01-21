@@ -19,7 +19,9 @@ let arrCMD = [];
 let bConnection = false;
 let bWaitingForResponse = false;
 let cmdInterval;
+let pingInterval;
 let bWaitQueue = false;
+let bFirstPing = true;
 let bHasIncomingData = false;
 let in_msg = '';
 
@@ -31,20 +33,20 @@ const cmdWaitQueue_1000 = new Buffer([0x03, 0xe8]);
 
 //----https://gist.github.com/Jozo132/2c0fae763f5dc6635a6714bb741d152f
 const Float32ToHex = float32 => {
-	const getHex = i => ("00" + i.toString(16)).slice(-2);
+	const getHex = i => ('00' + i.toString(16)).slice(-2);
 	var view = new DataView(new ArrayBuffer(4));
 	view.setFloat32(0, float32);
 	return Array.apply(null, { length: 4 })
 		.map((_, i) => getHex(view.getUint8(i)))
-		.join("");
+		.join('');
 };
 
 const Float32ToBin = float32 =>
 	parseInt(Float32ToHex(float32), 16)
 		.toString(2)
-		.padStart(32, "0");
+		.padStart(32, '0');
 const conv754 = float32 => {
-	const getHex = i => parseInt(("00" + i.toString(16)).slice(-2), 16);
+	const getHex = i => parseInt(('00' + i.toString(16)).slice(-2), 16);
 	var view = new DataView(new ArrayBuffer(4));
 	view.setFloat32(0, float32);
 	return Array.apply(null, { length: 4 }).map((_, i) => getHex(view.getUint8(i)));
@@ -115,6 +117,7 @@ class Test extends utils.Adapter {
 		bConnection = false;
 		bWaitQueue = false;
 		bHasIncomingData = false;
+		bFirstPing = true;
 
 		//----CMD-Queue einrichten   
 		clearInterval(cmdInterval);
@@ -140,15 +143,16 @@ class Test extends utils.Adapter {
 			} else {
 				parentThis.log.debug('_connect().bConnection==true. Nichts tun');
 			}
-			//clearInterval(pingInterval);
-			//clearInterval(query);
-
-			//parentThis._connect();
+			if(pingInterval){
+				clearInterval(pingInterval);
+			}
+			
+			//clearInterval(query);		
 			//query = setInterval(function(){parentThis._connect()}, BIGINTERVALL);
 
-			//pingInterval = setInterval(function() {
-			//	parentThis.pingMatrix();
-			//  }, PINGINTERVALL);
+			pingInterval = setInterval(function() {
+				parentThis.pingMatrix();
+			}, 2000);
 
 			//----Queue
 			//  clearInterval(cmdInterval);
@@ -209,6 +213,23 @@ class Test extends utils.Adapter {
 		});
 	}
 
+	pingMatrix() {
+		if (bConnection == true) {
+			if (arrCMD.length == 0) {
+				this.log.debug('pingMatrix()');
+				arrCMD.push(cmdConnect);
+
+				if (bFirstPing) {
+					//----Ab jetzt nicht mehr
+					bFirstPing = false;
+					//this.setDate();
+				}
+			}
+		} else {
+			//----No Connection
+			this.log.info('pingMatrix(): No Connection.');
+		}
+	}
 
 	processCMD() {
 		this.log.debug('processCMD()');
