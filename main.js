@@ -160,9 +160,8 @@ class Test extends utils.Adapter {
 		this.log.info('processCMD()');
 
 		//var bWait = false;
-
-		if (bWaitingForResponse == false) {
-			if(bWaitQueue==false){
+		if(bWaitQueue==false){
+			if (bWaitingForResponse == false) {
 				if (arrCMD.length > 0) {
 					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
 					bWaitingForResponse = true;
@@ -199,12 +198,12 @@ class Test extends utils.Adapter {
 					}
 				} else {
 					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
-				}
-			}else{
-				this.log.debug('processCMD: bWaitQueue==TRUE, warten');
+				}			
+			} else {
+				this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
 			}
-		} else {
-			this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
+		}else{
+			this.log.debug('processCMD: bWaitQueue==TRUE, warten');
 		}
 
 		//----Anzeige der Quelength auf der Oberflaeche
