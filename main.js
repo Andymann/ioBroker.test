@@ -221,9 +221,9 @@ class Test extends utils.Adapter {
 	}
 
 	pingMatrix() {
-		if (bConnection == true) {
+		if ((bConnection == true)&&(bWaitingForResponse==false)) {
 			if (arrCMD.length == 0) {
-				this.log.debug('pingMatrix()');
+				//this.log.debug('pingMatrix()');
 				arrCMD.push(cmdConnect);
 
 				if (bFirstPing) {
@@ -247,13 +247,13 @@ class Test extends utils.Adapter {
 		if (bWaitQueue == false) {
 			if (bWaitingForResponse == false) {
 				if (arrCMD.length > 0) {
-					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
+					//this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
 					bWaitingForResponse = true;
 
 					const tmp = arrCMD.shift();
 					if (tmp.length == 10) {
 						//----Normaler Befehl
-						this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
+						//this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
 						matrix.write(tmp);
 						bHasIncomingData = false;
 						//lastCMD = tmp;
