@@ -66,7 +66,7 @@ class Test extends utils.Adapter {
 		clearInterval(cmdInterval);
 		cmdInterval = setInterval(function () {
 			parentThis.processCMD();
-		}, 1000);
+		}, 100);
 
 		this.connectMatrix();
 	}
