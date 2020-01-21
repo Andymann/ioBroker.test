@@ -265,7 +265,7 @@ class Test extends utils.Adapter {
 
 
 	processIncoming(chunk) {
-		parentThis.log.info('processIncoming(): ' + parentThis.toHexString(chunk));
+		parentThis.log.info('processIncoming(): ' + toHexString(chunk));
 		in_msg += toHexString(chunk);
 		bHasIncomingData = true; // IrgendETWAS ist angekommen
 
