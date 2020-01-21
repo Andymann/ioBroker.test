@@ -9,7 +9,13 @@
 const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
-// const fs = require("fs");
+// const fs = require('fs');
+var net = require('net');
+var matrix = null;
+
+var parentThis;
+
+var arrCMD = [];
 
 class Test extends utils.Adapter {
 
@@ -26,7 +32,94 @@ class Test extends utils.Adapter {
 		this.on('stateChange', this.onStateChange.bind(this));
 		// this.on('message', this.onMessage.bind(this));
 		this.on('unload', this.onUnload.bind(this));
+
+		parentThis = this;
 	}
+
+	//==================================================================================
+	initMatrix() {
+		this.log.info('initMatrix().');
+		this.connectMatrix();
+	}
+
+	connectMatrix(cb) {
+		//this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
+		this.log.info('connectMatrix()');
+
+		arrCMD = [];
+		matrix = new net.Socket();
+		matrix.connect(1024, '192.168.1.100', function () {
+			//clearInterval(pingInterval);
+			//clearInterval(query);
+
+			//parentThis._connect();
+			//query = setInterval(function(){parentThis._connect()}, BIGINTERVALL);
+
+			//pingInterval = setInterval(function() {
+			//	parentThis.pingMatrix();
+			//  }, PINGINTERVALL);
+
+			//----Queue
+			//  clearInterval(cmdInterval);
+			//  cmdInterval = setInterval(function() {
+			//	parentThis.processCMD();
+			//  }, 50);
+
+			//  if (cb) {
+			//	cb();
+			//  }
+		});
+
+		matrix.on('data', function (chunk) {
+			parentThis.log.info('matrix.onData()');
+			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
+			//parentThis._processIncoming(chunk);
+		});
+
+		matrix.on('timeout', function (e) {
+			//if (e.code == 'ENOTFOUND' || e.code == 'ECONNREFUSED' || e.code == 'ETIMEDOUT') {
+			//            matrix.destroy();
+			//}
+			parentThis.log.error('AudioMatrix TIMEOUT. TBD');
+			//parentThis.connection=false;
+			//parentThis.setConnState(false, true);
+			//            parentThis.reconnect();
+		});
+
+		matrix.on('error', function (e) {
+			if (e.code == 'ENOTFOUND' || e.code == 'ECONNREFUSED' || e.code == 'ETIMEDOUT') {
+				//matrix.destroy();
+				//parentThis.initMatrix();
+			}
+			parentThis.log.error(e);
+			//            parentThis.reconnect();
+		});
+
+		matrix.on('close', function (e) {
+			//if (bConnection) {
+			parentThis.log.error('AudioMatrix closed. TBD');
+			//}
+			//parentThis.reconnect();
+		});
+
+		matrix.on('disconnect', function (e) {
+			parentThis.log.error('AudioMatrix disconnected. TBD');
+			//            parentThis.reconnect();
+		});
+
+		matrix.on('end', function (e) {
+			parentThis.log.error('AudioMatrix ended');
+			//parentThis.setState('info.connection', false, true);
+		});
+	}
+
+
+
+
+
+	//==================================================================================
+
+
 
 	/**
 	 * Is called when databases are connected and adapter received configuration.
@@ -34,14 +127,14 @@ class Test extends utils.Adapter {
 	async onReady() {
 		// Initialize your adapter here
 
-		// The adapters config (in the instance object everything under the attribute "native") is accessible via
+		// The adapters config (in the instance object everything under the attribute 'native') is accessible via
 		// this.config:
 		this.log.info('config option1: ' + this.config.option1);
 		this.log.info('config option2: ' + this.config.option2);
 
 		/*
 		For every state in the system there has to be also an object of type state
-		Here a simple template for a boolean variable named "testVariable"
+		Here a simple template for a boolean variable named 'testVariable'
 		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
 		*/
 		await this.setObjectAsync('testVariable', {
@@ -66,7 +159,7 @@ class Test extends utils.Adapter {
 		// the variable testVariable is set to true as command (ack=false)
 		await this.setStateAsync('testVariable', true);
 
-		// same thing, but the value is flagged "ack"
+		// same thing, but the value is flagged 'ack'
 		// ack should be always set to true if the value is received from or acknowledged from the target system
 		await this.setStateAsync('testVariable', { val: true, ack: true });
 
@@ -79,6 +172,8 @@ class Test extends utils.Adapter {
 
 		result = await this.checkGroupAsync('admin', 'admin');
 		this.log.info('check group user admin group admin: ' + result);
+
+		this.initMatrix();
 	}
 
 	/**
@@ -126,7 +221,7 @@ class Test extends utils.Adapter {
 
 	// /**
 	//  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-	//  * Using this method requires "common.message" property to be set to true in io-package.json
+	//  * Using this method requires 'common.message' property to be set to true in io-package.json
 	//  * @param {ioBroker.Message} obj
 	//  */
 	// onMessage(obj) {
