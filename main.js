@@ -283,7 +283,7 @@ class Test extends utils.Adapter {
 						//----Nix          
 					}
 				} else {
-					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
+					//this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
 				}
 			} else {
 				this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
