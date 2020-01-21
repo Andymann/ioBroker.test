@@ -262,6 +262,7 @@ class Test extends utils.Adapter {
 							if (bHasIncomingData == false) {
 								//----Nach x Milisekunden ist noch gar nichts angekommen....
 								parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + TIMEOUT.toString() + ' Milisekunden. OFFLINE?');
+								bConnection = false;
 								parentThis.disconnectMatrix();
 								parentThis.initMatrix();
 							} else {
@@ -284,7 +285,7 @@ class Test extends utils.Adapter {
 				this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
 			}
 		} else {
-			this.log.debug('processCMD: bWaitQueue==TRUE, warten');
+			//this.log.debug('processCMD: bWaitQueue==TRUE, warten');
 		}
 
 		//----Anzeige der Quelength auf der Oberflaeche
