@@ -346,7 +346,7 @@ class Test extends utils.Adapter {
 					let sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
 					let bValue = iValue == 0 ? false : true;
-					let.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
+					this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
 
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
