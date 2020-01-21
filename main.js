@@ -10,12 +10,28 @@ const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
 // const fs = require('fs');
-var net = require('net');
-var matrix = null;
+let net = require('net');
+let matrix = null;
 
-var parentThis;
+let parentThis;
 
-var arrCMD = [];
+let arrCMD = [];
+let bConnection = false;
+let bWaitingForResponse = false;
+let cmdInterval;
+
+const cmdConnect = new Buffer([0x5a, 0xa5, 0x14, 0x00, 0x40, 0x00, 0x00, 0x00, 0x0a, 0x5d]);
+const cmdDisconnect = new Buffer([0x5a, 0xa5, 0x14, 0x01, 0x3f, 0x80, 0x00, 0x00, 0x0a, 0x5d]);
+const cmdBasicResponse = new Buffer([0x5a, 0xa5, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0x0a, 0xa9]);
+const cmdTransmissionDone = new Buffer([0x5a, 0xa5, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1, 0x0a, 0xaf]);
+const cmdWaitQueue_1000 = new Buffer([0x03, 0xe8]);
+
+function toHexString(byteArray) {
+	return Array.from(byteArray, function (byte) {
+		return ('0' + (byte & 0xff).toString(16)).slice(-2);
+	}).join('');
+}
+
 
 class Test extends utils.Adapter {
 
@@ -39,8 +55,20 @@ class Test extends utils.Adapter {
 	//==================================================================================
 	initMatrix() {
 		this.log.info('initMatrix().');
+
+		arrCMD = [];
+		bWaitingForResponse = false;
+		bConnection = false;
+
+		//----CMD-Queue einrichten   
+		clearInterval(cmdInterval);
+		cmdInterval = setInterval(function () {
+			parentThis.processCMD();
+		}, 1000);
+
 		this.connectMatrix();
 	}
+
 
 	connectMatrix(cb) {
 		//this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
@@ -49,6 +77,12 @@ class Test extends utils.Adapter {
 		arrCMD = [];
 		matrix = new net.Socket();
 		matrix.connect(1024, '192.168.1.100', function () {
+			if (bConnection == false) {
+				parentThis.log.debug('connectMatrix(). bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
+				arrCMD.push(cmdConnect);
+			} else {
+				parentThis.log.debug('_connect().bConnection==true. Nichts tun');
+			}
 			//clearInterval(pingInterval);
 			//clearInterval(query);
 
@@ -114,7 +148,56 @@ class Test extends utils.Adapter {
 	}
 
 
+	processCMD() {
+		this.log.info('processCMD()');
 
+		//var bWait = false;
+
+		if (bWaitingForResponse == false) {
+			if (arrCMD.length > 0) {
+				this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
+				bWaitingForResponse = true;
+
+				let tmp = arrCMD.shift();
+				if (tmp.length == 10) {
+					//----Normaler Befehl
+					this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
+					//lastCMD = tmp;
+					//iMaxTryCounter = MAXTRIES;
+					//matrix.write(tmp);
+					//bHasIncomingData = false;
+					//clearTimeout(query);
+					//query = setTimeout(function () {
+					//	//----Es ist ander als bei der 880er: 2 Sekunden keine Antwort und das Teil ist offline
+					//	if (bHasIncomingData == false) {
+					//		//----Nach x Milisekunden ist noch gar nichts angekommen....
+					//		parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + OFFLINETIMER.toString() + ' Milisekunden. OFFLINE?');
+					//		parentThis._setOffline();
+					//		parentThis.reconnect();
+					//	} else {
+					//		//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
+					//	}
+					//}, OFFLINETIMER);
+					//matrix.write(tmp);
+				} else if (tmp.length == 2) {
+					this.log.debug('processCMD.waitQueue: ' + iWait.toString());
+					//----WaitQueue, Der Wert entspricht den zu wartenden Milisekunden
+					//var iWait = tmp[0] * 256 + tmp[1];
+					//setTimeout(function(){ bWait=false; parentThis.log.info('processCMD.waitQueue DONE'); }, iWait);
+				} else {
+					//----Nix          
+				}
+			} else {
+				this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
+			}
+		} else {
+			this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
+		}
+
+		//----Anzeige der Quelength auf der Oberflaeche
+		//        this.setStateAsync('queuelength', { val: arrCMD.length, ack: true });
+		//
+	}
 
 
 	//==================================================================================
@@ -137,6 +220,7 @@ class Test extends utils.Adapter {
 		Here a simple template for a boolean variable named 'testVariable'
 		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
 		*/
+		/*
 		await this.setObjectAsync('testVariable', {
 			type: 'state',
 			common: {
@@ -148,7 +232,7 @@ class Test extends utils.Adapter {
 			},
 			native: {},
 		});
-
+		*/
 		// in this template all states changes inside the adapters namespace are subscribed
 		this.subscribeStates('*');
 
@@ -157,14 +241,14 @@ class Test extends utils.Adapter {
 		you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
 		*/
 		// the variable testVariable is set to true as command (ack=false)
-		await this.setStateAsync('testVariable', true);
+		//await this.setStateAsync('testVariable', true);
 
 		// same thing, but the value is flagged 'ack'
 		// ack should be always set to true if the value is received from or acknowledged from the target system
-		await this.setStateAsync('testVariable', { val: true, ack: true });
+		//await this.setStateAsync('testVariable', { val: true, ack: true });
 
 		// same thing, but the state is deleted after 30s (getState will return null afterwards)
-		await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
+		//await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
 
 		// examples for the checkPassword/checkGroup functions
 		let result = await this.checkPasswordAsync('admin', 'iobroker');
