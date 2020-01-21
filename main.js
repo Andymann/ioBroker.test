@@ -235,6 +235,10 @@ class Test extends utils.Adapter {
 		} else {
 			//----No Connection
 			this.log.info('pingMatrix(): No Connection.');
+			parentThis.disconnectMatrix();
+			parentThis.initMatrix();
+
+
 		}
 	}
 
@@ -266,7 +270,7 @@ class Test extends utils.Adapter {
 								parentThis.disconnectMatrix();
 								parentThis.initMatrix();
 							} else {
-								//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
+								parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
 							}
 						}, TIMEOUT);
 
