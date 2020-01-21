@@ -130,6 +130,10 @@ class Test extends utils.Adapter {
 		this.connectMatrix();
 	}
 
+	disconnectMatrix(){
+		this.log.info('disConnectMatrix()');
+		matrix.destroy();
+	}
 
 	connectMatrix(cb) {
 		//this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
@@ -259,6 +263,7 @@ class Test extends utils.Adapter {
 							if (bHasIncomingData == false) {
 								//----Nach x Milisekunden ist noch gar nichts angekommen....
 								parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + TIMEOUT.toString() + ' Milisekunden. OFFLINE?');
+								parentThis.disconnectMatrix();
 								parentThis.initMatrix();
 						//		parentThis._setOffline();
 						//		parentThis.reconnect();
