@@ -20,11 +20,13 @@ let bConnection = false;
 let bWaitingForResponse = false;
 let cmdInterval;
 let pingInterval;
+let query;
 let bWaitQueue = false;
 let bFirstPing = true;
 let bHasIncomingData = false;
 let in_msg = '';
 
+const TIMEOUT = 5000;
 const cmdConnect = new Buffer([0x5a, 0xa5, 0x14, 0x00, 0x40, 0x00, 0x00, 0x00, 0x0a, 0x5d]);
 const cmdDisconnect = new Buffer([0x5a, 0xa5, 0x14, 0x01, 0x3f, 0x80, 0x00, 0x00, 0x0a, 0x5d]);
 const cmdBasicResponse = new Buffer([0x5a, 0xa5, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0x0a, 0xa9]);
@@ -150,6 +152,7 @@ class Test extends utils.Adapter {
 			//clearInterval(query);		
 			//query = setInterval(function(){parentThis._connect()}, BIGINTERVALL);
 
+			//----Alle 2 Sekunden ein PING
 			pingInterval = setInterval(function() {
 				parentThis.pingMatrix();
 			}, 2000);
@@ -166,7 +169,7 @@ class Test extends utils.Adapter {
 		});
 
 		matrix.on('data', function (chunk) {
-			parentThis.log.info('matrix.onData()');
+			//parentThis.log.info('matrix.onData()');
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
 			parentThis.processIncoming(chunk);
 		});
@@ -248,19 +251,22 @@ class Test extends utils.Adapter {
 						//lastCMD = tmp;
 						//iMaxTryCounter = MAXTRIES;
 						//matrix.write(tmp);
-						//clearTimeout(query);
-						//query = setTimeout(function () {
-						//	//----Es ist ander als bei der 880er: 2 Sekunden keine Antwort und das Teil ist offline
-						//	if (bHasIncomingData == false) {
-						//		//----Nach x Milisekunden ist noch gar nichts angekommen....
-						//		parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + OFFLINETIMER.toString() + ' Milisekunden. OFFLINE?');
+						if(query){
+							clearTimeout(query);
+						}
+						query = setTimeout(function () {
+							//----5 Sekunden keine Antwort und das Teil ist offline
+							if (bHasIncomingData == false) {
+								//----Nach x Milisekunden ist noch gar nichts angekommen....
+								parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + TIMEOUT.toString() + ' Milisekunden. OFFLINE?');
+								parentThis.initMatrix();
 						//		parentThis._setOffline();
 						//		parentThis.reconnect();
-						//	} else {
-						//		//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
-						//	}
-						//}, OFFLINETIMER);
-						//matrix.write(tmp);
+							} else {
+								//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
+							}
+						}, TIMEOUT);
+						
 					} else if (tmp.length == 2) {
 						const iWait = tmp[0] * 256 + tmp[1];
 						bWaitQueue = true;
@@ -286,7 +292,7 @@ class Test extends utils.Adapter {
 
 
 	processIncoming(chunk) {
-		parentThis.log.info('processIncoming(): ' + toHexString(chunk));
+		//parentThis.log.info('processIncoming(): ' + toHexString(chunk));
 		in_msg += toHexString(chunk);
 		bHasIncomingData = true; // IrgendETWAS ist angekommen
 
@@ -302,12 +308,12 @@ class Test extends utils.Adapter {
 				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '11') {
 					//----5aa511c2c00000c2c00000c2c00000c2c0...
 					//----In der Regel als Antwort auf einen PING
-					parentThis.log.info('LevelMeter incoming');
+					parentThis.log.debug('LevelMeter incoming');
 					bWaitingForResponse = false;
 				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '12') {
 					//----5aa512c2c00000c2c00000c...
 					//----In der Regel als Antwort auf einen PING
-					parentThis.log.info('Sprectrum incoming');
+					parentThis.log.debug('Sprectrum incoming');
 					bWaitingForResponse = false;
 				} else {
 					//----Irgendwie vergniesgnaddelt
