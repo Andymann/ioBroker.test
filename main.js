@@ -162,6 +162,7 @@ class Test extends utils.Adapter {
 				if (tmp.length == 10) {
 					//----Normaler Befehl
 					this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
+					this.writeFile(tmp);
 					//lastCMD = tmp;
 					//iMaxTryCounter = MAXTRIES;
 					//matrix.write(tmp);
