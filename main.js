@@ -130,7 +130,7 @@ class Test extends utils.Adapter {
 		this.connectMatrix();
 	}
 
-	disconnectMatrix(){
+	disconnectMatrix() {
 		this.log.info('disConnectMatrix()');
 		matrix.destroy();
 	}
@@ -149,15 +149,15 @@ class Test extends utils.Adapter {
 			} else {
 				parentThis.log.debug('_connect().bConnection==true. Nichts tun');
 			}
-			if(pingInterval){
+			if (pingInterval) {
 				clearInterval(pingInterval);
 			}
-			
+
 			//clearInterval(query);		
 			//query = setInterval(function(){parentThis._connect()}, BIGINTERVALL);
 
 			//----Alle 2 Sekunden ein PING
-			pingInterval = setInterval(function() {
+			pingInterval = setInterval(function () {
 				parentThis.pingMatrix();
 			}, 2000);
 
@@ -239,7 +239,7 @@ class Test extends utils.Adapter {
 	}
 
 	processCMD() {
-		this.log.debug('processCMD()');
+		//this.log.debug('processCMD()');
 		if (bWaitQueue == false) {
 			if (bWaitingForResponse == false) {
 				if (arrCMD.length > 0) {
@@ -254,8 +254,7 @@ class Test extends utils.Adapter {
 						bHasIncomingData = false;
 						//lastCMD = tmp;
 						//iMaxTryCounter = MAXTRIES;
-						//matrix.write(tmp);
-						if(query){
+						if (query) {
 							clearTimeout(query);
 						}
 						query = setTimeout(function () {
@@ -265,13 +264,11 @@ class Test extends utils.Adapter {
 								parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + TIMEOUT.toString() + ' Milisekunden. OFFLINE?');
 								parentThis.disconnectMatrix();
 								parentThis.initMatrix();
-						//		parentThis._setOffline();
-						//		parentThis.reconnect();
 							} else {
 								//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
 							}
 						}, TIMEOUT);
-						
+
 					} else if (tmp.length == 2) {
 						const iWait = tmp[0] * 256 + tmp[1];
 						bWaitQueue = true;
@@ -313,12 +310,12 @@ class Test extends utils.Adapter {
 				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '11') {
 					//----5aa511c2c00000c2c00000c2c00000c2c0...
 					//----In der Regel als Antwort auf einen PING
-					parentThis.log.debug('LevelMeter incoming');
+					//parentThis.log.debug('LevelMeter incoming');
 					bWaitingForResponse = false;
 				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '12') {
 					//----5aa512c2c00000c2c00000c...
 					//----In der Regel als Antwort auf einen PING
-					parentThis.log.debug('Sprectrum incoming');
+					//parentThis.log.debug('Sprectrum incoming');
 					bWaitingForResponse = false;
 				} else {
 					//----Irgendwie vergniesgnaddelt
