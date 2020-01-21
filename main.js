@@ -19,6 +19,7 @@ let arrCMD = [];
 let bConnection = false;
 let bWaitingForResponse = false;
 let cmdInterval;
+let bWaitQueue = false;
 
 const cmdConnect = new Buffer([0x5a, 0xa5, 0x14, 0x00, 0x40, 0x00, 0x00, 0x00, 0x0a, 0x5d]);
 const cmdDisconnect = new Buffer([0x5a, 0xa5, 0x14, 0x01, 0x3f, 0x80, 0x00, 0x00, 0x0a, 0x5d]);
@@ -59,6 +60,7 @@ class Test extends utils.Adapter {
 		arrCMD = [];
 		bWaitingForResponse = false;
 		bConnection = false;
+		bWaitQueue=false;
 
 		//----CMD-Queue einrichten   
 		clearInterval(cmdInterval);
@@ -80,6 +82,7 @@ class Test extends utils.Adapter {
 			if (bConnection == false) {
 				parentThis.log.debug('connectMatrix(). bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
 				arrCMD.push(cmdConnect);
+				arrCMD.push(cmdWaitQueue_1000);
 			} else {
 				parentThis.log.debug('_connect().bConnection==true. Nichts tun');
 			}
@@ -124,6 +127,11 @@ class Test extends utils.Adapter {
 			if (e.code == 'ENOTFOUND' || e.code == 'ECONNREFUSED' || e.code == 'ETIMEDOUT') {
 				//matrix.destroy();
 				//parentThis.initMatrix();
+				if(e.code == 'ECONNREFUSED'){
+					parentThis.log.error('Keine Verbindung. Ist der Adapter online?');
+					arrCMD.push(cmdWaitQueue_1000);
+
+				}
 			}
 			parentThis.log.error(e);
 			//            parentThis.reconnect();
@@ -154,42 +162,46 @@ class Test extends utils.Adapter {
 		//var bWait = false;
 
 		if (bWaitingForResponse == false) {
-			if (arrCMD.length > 0) {
-				this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
-				bWaitingForResponse = true;
+			if(bWaitQueue==false){
+				if (arrCMD.length > 0) {
+					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD.length=' + arrCMD.length.toString());
+					bWaitingForResponse = true;
 
-				let tmp = arrCMD.shift();
-				if (tmp.length == 10) {
-					//----Normaler Befehl
-					this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
-					matrix.write(tmp);
-					//lastCMD = tmp;
-					//iMaxTryCounter = MAXTRIES;
-					//matrix.write(tmp);
-					//bHasIncomingData = false;
-					//clearTimeout(query);
-					//query = setTimeout(function () {
-					//	//----Es ist ander als bei der 880er: 2 Sekunden keine Antwort und das Teil ist offline
-					//	if (bHasIncomingData == false) {
-					//		//----Nach x Milisekunden ist noch gar nichts angekommen....
-					//		parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + OFFLINETIMER.toString() + ' Milisekunden. OFFLINE?');
-					//		parentThis._setOffline();
-					//		parentThis.reconnect();
-					//	} else {
-					//		//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
-					//	}
-					//}, OFFLINETIMER);
-					//matrix.write(tmp);
-				} else if (tmp.length == 2) {
-					this.log.debug('processCMD.waitQueue: ' + iWait.toString());
-					//----WaitQueue, Der Wert entspricht den zu wartenden Milisekunden
-					//var iWait = tmp[0] * 256 + tmp[1];
-					//setTimeout(function(){ bWait=false; parentThis.log.info('processCMD.waitQueue DONE'); }, iWait);
+					let tmp = arrCMD.shift();
+					if (tmp.length == 10) {
+						//----Normaler Befehl
+						this.log.debug('processCMD: next CMD=' + toHexString(tmp) + ' arrCMD.length rest=' + arrCMD.length.toString());
+						matrix.write(tmp);
+						//lastCMD = tmp;
+						//iMaxTryCounter = MAXTRIES;
+						//matrix.write(tmp);
+						//bHasIncomingData = false;
+						//clearTimeout(query);
+						//query = setTimeout(function () {
+						//	//----Es ist ander als bei der 880er: 2 Sekunden keine Antwort und das Teil ist offline
+						//	if (bHasIncomingData == false) {
+						//		//----Nach x Milisekunden ist noch gar nichts angekommen....
+						//		parentThis.log.error('processCMD(): KEINE EINKOMMENDEN DATEN NACH ' + OFFLINETIMER.toString() + ' Milisekunden. OFFLINE?');
+						//		parentThis._setOffline();
+						//		parentThis.reconnect();
+						//	} else {
+						//		//parentThis.log.info('processCMD(): Irgendetwas kam an... es lebt.');
+						//	}
+						//}, OFFLINETIMER);
+						//matrix.write(tmp);
+					} else if (tmp.length == 2) {
+						let iWait = tmp[0] * 256 + tmp[1];
+						bWaitQueue=true;
+						this.log.debug('processCMD.waitQueue: ' + iWait.toString());
+						setTimeout(function(){ bWaitQueue=false; parentThis.log.info('processCMD.waitQueue DONE'); }, iWait);
+					} else {
+						//----Nix          
+					}
 				} else {
-					//----Nix          
+					this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
 				}
-			} else {
-				this.log.debug('processCMD: bWaitingForResponse==FALSE, arrCMD ist leer. Kein Problem');
+			}else{
+				this.log.debug('processCMD: bWaitQueue==TRUE, warten');
 			}
 		} else {
 			this.log.debug('AudioMatrix: processCMD: bWaitingForResponse==TRUE. Nichts machen');
