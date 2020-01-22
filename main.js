@@ -159,7 +159,7 @@ class Test extends utils.Adapter {
 			//----Alle 2 Sekunden ein PING
 			pingInterval = setInterval(function () {
 				parentThis.pingMatrix();
-			}, 2000);
+			}, 750);
 
 			//----Queue
 			//  clearInterval(cmdInterval);
