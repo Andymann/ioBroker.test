@@ -236,8 +236,8 @@ class Test extends utils.Adapter {
 		} else {
 			//----No Connection
 			this.log.info('pingMatrix(): No Connection.');
-			parentThis.disconnectMatrix();
-			parentThis.initMatrix();
+			//parentThis.disconnectMatrix();
+			//parentThis.initMatrix();
 
 
 		}
