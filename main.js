@@ -337,7 +337,7 @@ class Test extends utils.Adapter {
 			}
 		} else {
 			//----Durch die PING-Mechanik kommt hier recht viel an, da muessen wir spaeter drauf schauen.
-			parentThis.log.info('AudioMatrix: matrix.on data(): incomming aber bWaitingForResponse==FALSE; in_msg:' + in_msg);
+			//parentThis.log.info('AudioMatrix: matrix.on data(): incomming aber bWaitingForResponse==FALSE; in_msg:' + in_msg);
 		}
 
 		if (in_msg.length > 120) {
