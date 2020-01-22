@@ -319,7 +319,7 @@ class Test extends utils.Adapter {
 					in_msg = in_msg.slice(20); //Die ersten 20 Zeichen abschneiden
 					//parentThis.log.info('_processIncoming(); filtered:' + tmpMSG);
 					parentThis.parseMSG(tmpMSG);
-					bWaitingForResponse = false;
+					//bWaitingForResponse = false;
 				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '11') {
 					//----5aa511c2c00000c2c00000c2c00000c2c0...
 					//----In der Regel als Antwort auf einen PING
@@ -356,8 +356,7 @@ class Test extends utils.Adapter {
 
 		} else if (sMSG === toHexString(cmdTransmissionDone)) {
 			this.log.info('parseMSG(): Transmission Done.');
-			this.setState('info.connection', true, true); //Green led in 'Instances'
-			
+			this.setState('info.connection', true, true); //Green led in 'Instances'			
 			bWaitingForResponse = false;
 		} else if (sMSG.startsWith('5aa50700')) {
 			//this.log.info('_parseMSG(): received main volume from Matrix.');
