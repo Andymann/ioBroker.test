@@ -20,6 +20,7 @@ let bConnection = false;
 let bWaitingForResponse = false;
 let cmdInterval;
 let pingInterval;
+let iMissedPingCounter=0;
 let query;
 let bWaitQueue = false;
 let bFirstPing = true;
@@ -120,6 +121,8 @@ class Test extends utils.Adapter {
 		bWaitQueue = false;
 		bHasIncomingData = false;
 		bFirstPing = true;
+		iMissedPingCounter =0;		
+
 
 		//----CMD-Queue einrichten   
 		clearInterval(cmdInterval);
@@ -226,7 +229,7 @@ class Test extends utils.Adapter {
 			if (arrCMD.length == 0) {
 				//this.log.debug('pingMatrix()');
 				arrCMD.push(cmdConnect);
-
+				iMissedPingCounter=0;
 				if (bFirstPing) {
 					//----Ab jetzt nicht mehr
 					bFirstPing = false;
@@ -236,9 +239,13 @@ class Test extends utils.Adapter {
 		} else {
 			//----No Connection
 			this.log.info('pingMatrix(): No Connection.');
-			//parentThis.disconnectMatrix();
-			//parentThis.initMatrix();
-
+			iMissedPingCounter++;
+			
+			if(iMissedPingCounter>10){	//7,5 Sekunden
+				this.log.info('pingMatrix(): 10 mal No Connection. Forciere Reconnect');
+				parentThis.disconnectMatrix();
+				parentThis.initMatrix();
+			}
 
 		}
 	}
@@ -381,7 +388,7 @@ class Test extends utils.Adapter {
 					let sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
 					let bValue = iValue == 0 ? false : true;
-					//this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
+					this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
 					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
