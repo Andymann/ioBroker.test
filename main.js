@@ -318,8 +318,8 @@ class Test extends utils.Adapter {
 					const tmpMSG = in_msg.toLowerCase().substring(iStartPos, iStartPos + 20); //Checksum
 					in_msg = in_msg.slice(20); //Die ersten 20 Zeichen abschneiden
 					//parentThis.log.info('_processIncoming(); filtered:' + tmpMSG);
-					bWaitingForResponse = false;
 					parentThis.parseMSG(tmpMSG);
+					bWaitingForResponse = false;
 				} else if (in_msg.toLowerCase().substring(iStartPos + 4, iStartPos + 6) == '11') {
 					//----5aa511c2c00000c2c00000c2c00000c2c0...
 					//----In der Regel als Antwort auf einen PING
