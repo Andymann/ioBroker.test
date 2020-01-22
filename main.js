@@ -307,7 +307,7 @@ class Test extends utils.Adapter {
 
 
 	processIncoming(chunk) {
-		parentThis.log.info('processIncoming(): ' + toHexString(chunk));
+		//parentThis.log.info('processIncoming(): ' + toHexString(chunk));
 		in_msg += toHexString(chunk);
 		bHasIncomingData = true; // IrgendETWAS ist angekommen
 
@@ -349,7 +349,7 @@ class Test extends utils.Adapter {
 
 	//----Daten komen von der Hardware an
 	parseMSG(sMSG) {
-		this.log.info('parseMSG():' + sMSG);
+		//this.log.info('parseMSG():' + sMSG);
 		if (sMSG === toHexString(cmdBasicResponse)) {
 			this.log.info('parseMSG(): Basic Response.');
 			bConnection = true;
