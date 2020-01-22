@@ -351,7 +351,7 @@ class Test extends utils.Adapter {
 	parseMSG(sMSG) {
 		//this.log.info('parseMSG():' + sMSG);
 		if (sMSG === toHexString(cmdBasicResponse)) {
-			this.log.info('parseMSG(): Basic Response.');
+			//this.log.info('parseMSG(): Basic Response.');
 			bConnection = true;
 
 		} else if (sMSG === toHexString(cmdTransmissionDone)) {
@@ -363,8 +363,8 @@ class Test extends utils.Adapter {
 			let sHex = sMSG.substring(8, 16);
 			let iVal = HexToFloat32(sHex);
 			iVal = simpleMap(0, 100, iVal);
-			this.log.info('_parseMSG(): received main volume from Matrix. Processed Value:' + iVal.toString());
-			//this.setStateAsync('mainVolume', { val: iVal, ack: true });
+			//this.log.info('_parseMSG(): received main volume from Matrix. Processed Value:' + iVal.toString());
+			this.setStateAsync('mainVolume', { val: iVal, ack: true });
 		} else {
 			let sHex = sMSG.substring(4, 6);
 			let iVal = parseInt(sHex, 16);
@@ -378,19 +378,19 @@ class Test extends utils.Adapter {
 					//this.log.info('_parseMSG(): received INPUT Value for GAIN:' + sMSG.substring(8, 16));
 					let sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
-					this.log.info('_parseMSG(): received inputGain from Matrix. Original Value:' + sValue.toString());
+					//this.log.info('_parseMSG(): received inputGain from Matrix. Original Value:' + sValue.toString());
 					iValue = map(iValue, -80, 0, 0, 100); //this.simpleMap(0, 100, iVal);
-					this.log.info('_parseMSG(): received gain for input ' + (iVal).toString() + ' from Hardware. Processed Value:' + iValue.toString());
-					//this.setStateAsync('inputGain_' + (iVal).toString(), { val: iValue, ack: true });
+					//this.log.info('_parseMSG(): received gain for input ' + (iVal).toString() + ' from Hardware. Processed Value:' + iValue.toString());
+					this.setStateAsync('inputGain_' + (iVal).toString(), { val: iValue, ack: true });
 				} else if ((iCmd >= 51) && (iCmd <= 58)) {
 					//this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString()  + ' OUT:' + (iCmd-50).toString());
 					let sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
 					let bValue = iValue == 0 ? false : true;
-					this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
+					//this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
-					//this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
+					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
 				}
 			} else if (iVal >= 7 && iVal <= 14) {
 				//----Output....
@@ -402,10 +402,10 @@ class Test extends utils.Adapter {
 					//this.log.info('_parseMSG(): received OUTPUT Value for GAIN:' + sMSG.substring(8, 16));
 					let sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
-					this.log.info('_parseMSG(): received outputGain from Matrix. Original Value:' + sValue.toString());
+					//this.log.info('_parseMSG(): received outputGain from Matrix. Original Value:' + sValue.toString());
 					iValue = map(iValue, -80, 0, 0, 100); //this.simpleMap(0, 100, iVal);
-					this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
-					//this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
+					//this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
+					this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
 				}
 			}
 		}
