@@ -345,12 +345,12 @@ class Test extends utils.Adapter {
 		//this.log.info('parseMSG():' + sMSG);
 		if (sMSG === toHexString(cmdBasicResponse)) {
 			this.log.info('parseMSG(): Basic Response.');
+			bConnection = true;
 
 		} else if (sMSG === toHexString(cmdTransmissionDone)) {
 			this.log.info('parseMSG(): Transmission Done.');
 			this.setState('info.connection', true, true); //Green led in 'Instances'
-
-			bConnection = true;
+			
 			bWaitingForResponse = false;
 		} else if (sMSG.startsWith('5aa50700')) {
 			//this.log.info('_parseMSG(): received main volume from Matrix.');
