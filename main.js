@@ -222,7 +222,7 @@ class Test extends utils.Adapter {
 
 	pingMatrix() {
 		//bWaitingForRepsonse because there could be some looong transmissions
-		if ((bConnection == true)&&(bWaitingForResponse==false)&&(bWaitQueue==false)) { 
+		if ((bConnection == true)/*&&(bWaitingForResponse==false)*/&&(bWaitQueue==false)) { 
 			if (arrCMD.length == 0) {
 				//this.log.debug('pingMatrix()');
 				arrCMD.push(cmdConnect);
