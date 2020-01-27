@@ -144,7 +144,7 @@ class Test extends utils.Adapter {
 
 		arrCMD = [];
 		matrix = new net.Socket();
-		matrix.connect(1024, '192.168.1.100', function () {
+		matrix.connect(1024, '192.168.1.210', function () {
 			if (bConnection == false) {
 				parentThis.log.debug('connectMatrix(). bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
 				arrCMD.push(cmdConnect);
