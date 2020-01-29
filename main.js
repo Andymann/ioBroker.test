@@ -399,7 +399,7 @@ class Test extends utils.Adapter {
 					this._changeRouting(i, pOut, false);
 				}
 			}
-			this._changeRouting(pIn, pOut, false);
+			this._changeRouting(pIn, pOut, pOnOff);
 		} else {
 			this.log.error('changeExclusiveRouting() via GUI: Coax inputs are not supported yet');
 		}
