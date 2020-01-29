@@ -393,8 +393,8 @@ class Test extends utils.Adapter {
 	_changeExclusiveRouting(pIn, pOut, pOnOff) {
 		this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
 		if (pIn >= 0 && pIn < 7) {
-			for (let i = 0; i < 9; i++) {
-				if(i!=pIn){
+			for (let i = 0; i < 8; i++) {
+				if (i !== pIn) {
 					//----Switch OFF all other inputs
 					this._changeRouting(i, pOut, false);
 				}
@@ -417,7 +417,7 @@ class Test extends utils.Adapter {
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
 	setDate() {
-		const sDate = (new Date().getDate()).toString() + '.' + (new Date().getMonth() + 1).toString() + '.' + new Date().getFullYear().toString() + ' ' +  new Date().getHours().toString() + ':' + new Date().getMinutes().toString();
+		const sDate = (new Date().getDate()).toString() + '.' + (new Date().getMonth() + 1).toString() + '.' + new Date().getFullYear().toString() + ' ' + new Date().getHours().toString() + ':' + new Date().getMinutes().toString();
 		this.log.info('setDate(' + sDate + ')');
 		this._setHardwareDate_year();
 		this._setHardwareDate_month();
@@ -603,7 +603,7 @@ class Test extends utils.Adapter {
 				let sID = inVal * 8 + outVal + '';
 				while (sID.length < 2) sID = '0' + sID;
 
-				await this.setObjectAsync('RoutingNode_Exclusive_ID_' + sID + '__IN_' + (inVal + 1).toString() + '_OUT_' + (outVal + 1).toString(), {
+				await this.setObjectAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + (inVal + 1).toString() + '_OUT_' + (outVal + 1).toString(), {
 					type: 'state',
 					common: {
 						name: 'Exclusive Routing ' + (inVal + 1).toString() + ' -> ' + (outVal + 1).toString(),
