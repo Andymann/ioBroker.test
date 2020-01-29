@@ -417,7 +417,8 @@ class Test extends utils.Adapter {
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
 	setDate() {
-		this.log.info('setDate()');
+		const sDate = (new Date().getDate()).toString() + '.' + (new Date().getMonth() + 1).toString() + '.' + new Date().getFullYear().toString() + ' ' +  new Date().getHours().toString() + ':' + new Date().getMinutes().toString();
+		this.log.info('setDate(' + sDate + ')');
 		this._setHardwareDate_year();
 		this._setHardwareDate_month();
 		this._setHardwareDate_day();
