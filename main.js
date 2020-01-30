@@ -682,10 +682,10 @@ class Test extends utils.Adapter {
 			await this.setObjectAsync('mute_' + (i + 1).toString(), {
 				type: 'state',
 				common: {
-					name: 'Mute output #' + i.toString(),
+					name: 'Mute output #' + (i+1).toString(),
 					type: 'boolean',
 					role: 'indicator',
-					desc: 'Mute output #' + i.toString(),
+					desc: 'Mute output #' + (i+1).toString(),
 					read: true,
 					write: true
 				},
