@@ -681,7 +681,6 @@ class Test extends utils.Adapter {
 				native: {}
 			});
 		}
-		* /
 	}
 
 	pingMatrix() {
