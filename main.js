@@ -35,6 +35,17 @@ const cmdTransmissionDone = new Buffer([0x5a, 0xa5, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1
 const cmdVol000 = new Buffer([0x5a, 0xa5, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
 const cmdWaitQueue_1000 = new Buffer([0x03, 0xe8]);
 
+let arrRouting=[false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false];
+
+
+
 //----https://gist.github.com/Jozo132/2c0fae763f5dc6635a6714bb741d152f
 const Float32ToHex = float32 => {
 	const getHex = i => ('00' + i.toString(16)).slice(-2);
@@ -683,10 +694,10 @@ class Test extends utils.Adapter {
 			await this.setObjectAsync('mute_' + (i + 1).toString(), {
 				type: 'state',
 				common: {
-					name: 'Mute output #' + (i+1).toString(),
+					name: 'Mute output #' + (i + 1).toString(),
 					type: 'boolean',
 					role: 'indicator',
-					desc: 'Mute output #' + (i+1).toString(),
+					desc: 'Mute output #' + (i + 1).toString(),
 					read: true,
 					write: true
 				},
@@ -828,6 +839,7 @@ class Test extends utils.Adapter {
 
 		} else if (sMSG === toHexString(cmdTransmissionDone)) {
 			this.log.info('parseMSG(): Transmission Done.');
+			this.processExclusiveRoutingStates();
 			this.setState('info.connection', true, true); //Green led in 'Instances'			
 			bWaitingForResponse = false;
 		} else if (sMSG.startsWith('5aa50700')) {
@@ -862,8 +874,9 @@ class Test extends utils.Adapter {
 					this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
-					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });				
-					this.setExclusiveRoutingState(iVal-1, iCmd-51, bValue);
+					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
+					//this.setExclusiveRoutingState(iVal-1, iCmd-51, bValue);
+					arrRouting[ ( (iVal - 1) * 8 + (iCmd - 50 - 1)) ]=bValue;
 				}
 			} else if (iVal >= 7 && iVal <= 14) {
 				//----Output....
@@ -874,11 +887,11 @@ class Test extends utils.Adapter {
 					//----Mute
 					const sValue = sMSG.substring(8, 16);
 					const iValue = HexToFloat32(sValue);
-					const bOnOff = (iValue>0) ? true : false;
-					this.log.info('_parseMSG(): received OUTPUT Value for MUTE. Output(Index):' + (iVal-7).toString() + ' Val:' + bOnOff.toString());
-					this.setStateAsync('mute_' + (iVal - 7+1).toString(), { val: bOnOff, ack: true });
+					const bOnOff = (iValue > 0) ? true : false;
+					this.log.info('_parseMSG(): received OUTPUT Value for MUTE. Output(Index):' + (iVal - 7).toString() + ' Val:' + bOnOff.toString());
+					this.setStateAsync('mute_' + (iVal - 7 + 1).toString(), { val: bOnOff, ack: true });
 
-				}else if (iCmd == 2) {
+				} else if (iCmd == 2) {
 					//----Gain
 					//this.log.info('_parseMSG(): received OUTPUT Value for GAIN:' + sMSG.substring(8, 16));
 					const sValue = sMSG.substring(8, 16);
@@ -886,7 +899,7 @@ class Test extends utils.Adapter {
 					//this.log.info('_parseMSG(): received outputGain from Matrix. Original Value:' + sValue.toString());
 					iValue = map(iValue, -40, 0, 0, 100); //this.simpleMap(0, 100, iVal);
 					//this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
-					this.setStateAsync('outputGain_' + (iVal - 7+1).toString(), { val: iValue, ack: true });
+					this.setStateAsync('outputGain_' + (iVal - 7 + 1).toString(), { val: iValue, ack: true });
 				}
 			}
 		}
@@ -894,9 +907,34 @@ class Test extends utils.Adapter {
 	//----0..7
 	//....0..7
 	// true / false
-	setExclusiveRoutingState(pIn, pOut, pVal){
-		this.log.info('setExclusiveRoutingState() IN(Index):' + pIn.toString() + ' OUT(Index):' +pOut.toString() + ' VAL:' + pVal.toString() );
+	setExclusiveRoutingState(pIn, pOut, pVal) {
+		this.log.info('setExclusiveRoutingState() IN(Index):' + pIn.toString() + ' OUT(Index):' + pOut.toString() + ' VAL:' + pVal.toString());
+	}
 
+	
+	//----After 'Transmission Done' is received
+	async processExclusiveRoutingStates() {
+		this.log.info('processExclusiveRoutingStates()');
+		
+		for (let i = 0; i < 8; i++) {
+			let iOnCounter = 0;
+			let iID=0;
+			let sIn;
+			let sOut;
+			for (let o = 0; o < 8; o++) {
+				iID= i*8+o;
+				if(arrRouting[iID]==true){
+					this.log.info('processExclusiveRoutingStates() State is TRUE for ID ' + iID.toString());
+					iOnCounter++;
+					sIn=(i+1).toString();
+					sOut=(o+1).toString();
+				}
+			}
+			if(iOnCounter==1){
+				this.log.info('processExclusiveRoutingStates() setState():'+'routingNode_Exclusive_ID_' + iID.toString() + '__IN_' + sIn + '_OUT_' + sOut );
+				await this.setStateAsync('routingNode_Exclusive_ID_' + iID.toString() + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
+			}
+		}
 
 
 
