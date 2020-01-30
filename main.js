@@ -850,7 +850,7 @@ class Test extends utils.Adapter {
 					const sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
 					//this.log.info('_parseMSG(): received inputGain from Matrix. Original Value:' + sValue.toString());
-					iValue = map(iValue, -80, 0, 0, 100); //this.simpleMap(0, 100, iVal);
+					iValue = map(iValue, -40, 0, 0, 100); //this.simpleMap(0, 100, iVal);
 					//this.log.info('_parseMSG(): received gain for input ' + (iVal).toString() + ' from Hardware. Processed Value:' + iValue.toString());
 					this.setStateAsync('inputGain_' + (iVal).toString(), { val: iValue, ack: true });
 				} else if ((iCmd >= 51) && (iCmd <= 58)) {
@@ -870,11 +870,11 @@ class Test extends utils.Adapter {
 				const iCmd = parseInt(sCmd, 16);
 				if (iCmd == 1) {
 					//----Mute
-					this.log.info('_parseMSG(): received OUTPUT Value for MUTE. Output(Index):' + (iVal-7).toString());
 					const sValue = sMSG.substring(8, 16);
 					const iValue = HexToFloat32(sValue);
 					const bOnOff = (iValue>0) ? true : false;
-					this.setStateAsync('mute_' + (iVal - 7).toString(), { val: bOnOff, ack: true });
+					this.log.info('_parseMSG(): received OUTPUT Value for MUTE. Output(Index):' + (iVal-7).toString() + ' Val:' + bOnOff.toString());
+					this.setStateAsync('mute_' + (iVal - 7+1).toString(), { val: bOnOff, ack: true });
 
 				}else if (iCmd == 2) {
 					//----Gain
@@ -882,7 +882,7 @@ class Test extends utils.Adapter {
 					const sValue = sMSG.substring(8, 16);
 					let iValue = HexToFloat32(sValue);
 					//this.log.info('_parseMSG(): received outputGain from Matrix. Original Value:' + sValue.toString());
-					iValue = map(iValue, -80, 0, 0, 100); //this.simpleMap(0, 100, iVal);
+					iValue = map(iValue, -40, 0, 0, 100); //this.simpleMap(0, 100, iVal);
 					//this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
 					this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
 				}
