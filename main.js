@@ -347,7 +347,7 @@ class Test extends utils.Adapter {
 	_changeInputGain(pID, pVal) {
 		this.log.info('changeInputGain via GUI. ID(Index):' + pID.toString() + ' VAL:' + pVal.toString());
 		if (pID >= 0 && pID < 7) {
-			pVal = map(pVal, 0, 100, -80, 0);
+			pVal = map(pVal, 0, 100, -40, 0);
 			this.log.info('changeInputGain via GUI: VAL(neu):' + pVal.toString());
 			const arrVal = conv754(pVal);
 			let tmpCMD = new Buffer([0x5a, 0xa5, 0x01 /* Input number */, 0x02 /* Gain */, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
@@ -372,7 +372,7 @@ class Test extends utils.Adapter {
 	//---- pVal: 0..100
 	_changeOutputGain(pID, pVal) {
 		this.log.info('changeOutputGain via GUI. ID(Index):' + pID.toString() + ' VAL:' + pVal.toString());
-		pVal = map(pVal, 0, 100, -80, 0);
+		pVal = map(pVal, 0, 100, -40, 0);
 		this.log.info('changeOutputGain via GUI: VAL(neu):' + pVal.toString());
 		const arrVal = conv754(pVal);
 		let tmpCMD = new Buffer([0x5a, 0xa5, 0x01 /* Input number */, 0x02 /* Gain */, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
