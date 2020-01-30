@@ -238,7 +238,7 @@ class Test extends utils.Adapter {
 	}
 
 
-	//----Ein State wurde per GUI veraendert
+	//----ack==FALSE: Ein State wurde per GUI veraendert
 	changeMatrix(id, val, ack) {
 		if (bConnection && val && !val.ack) {
 			//this.log.info('matrixChanged: tabu=TRUE' );
@@ -272,6 +272,8 @@ class Test extends utils.Adapter {
 				const iOut = idVal - iIn * 8;
 				//----Ein- und Ausgang sind jetzt 0-indiziert
 				this._changeExclusiveRouting(iIn, iOut, val);
+				this._fixRoutingStates(iIn, iOut, val);
+
 			} else if (id.toUpperCase().includes('INPUTGAIN_')) {
 				//----Die ID des InputGains ist einstellig
 				let sID = id.substring(id.toUpperCase().indexOf('GAIN_') + 5);
@@ -397,6 +399,9 @@ class Test extends utils.Adapter {
 				if (i !== pIn) {
 					//----Switch OFF all other inputs
 					this._changeRouting(i, pOut, false);
+					//----Die anderen Routingstates muessen entsprechend gesetzt werden
+					//await this.setStateAsync('routingNode_ID_' + pIDString + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
+
 				}
 			}
 			this._changeRouting(pIn, pOut, pOnOff);
@@ -405,6 +410,32 @@ class Test extends utils.Adapter {
 		}
 		//this.log.info('changeRouting(): last CMD in arrCMD:' + this.toHexString( arrCMD[arrCMD.length-1] ) );
 	}
+
+	async _fixRoutingStates(pIn, pOut, pOnOff) {
+		//this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
+		if (pIn >= 0 && pIn < 7) {
+			for (let i = 0; i < 8; i++) {
+				if (i !== pIn) {
+					let sID = i * 8 + pOut + '';
+					while (sID.length < 2) sID = '0' + sID;
+					//----Die anderen Routingstates muessen entsprechend gesetzt werden. Erstmal alle anderen AUS
+					await this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (i + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
+					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + (i + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
+
+				}
+			}
+
+			//----Und schliuesslich wir
+			let sID = pIn * 8 + pOut + '';
+			while (sID.length < 2) sID = '0' + sID;
+			await this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: pOnOff, ack: true });
+
+		} else {
+			this.log.error('changeExclusiveRouting() via GUI: Coax inputs are not supported yet');
+		}
+		//this.log.info('changeRouting(): last CMD in arrCMD:' + this.toHexString( arrCMD[arrCMD.length-1] ) );
+	}
+
 
 	//----Call fron onReady. Creating everything that can later be changed via GUI
 	async createStates() {
