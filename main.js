@@ -437,6 +437,7 @@ class Test extends utils.Adapter {
 
 	//----Fixes ioBroker's internal states according to the routing-situation
 	//----Seperated from _changeExlcusiveRouting() since I don't want to write to the hardware from an async function
+	//----just because I'm not sure what that might lead to.
 	async _fixRoutingStates(pIn, pOut, pOnOff) {
 		//this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
 		if (pIn >= 0 && pIn < 7) {
@@ -861,7 +862,8 @@ class Test extends utils.Adapter {
 					this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
-					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
+					//this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
+					this._fixRoutingStates(iVal-1, iCmd-50-1, bValue);
 				}
 			} else if (iVal >= 7 && iVal <= 14) {
 				//----Output....
