@@ -173,7 +173,7 @@ class Test extends utils.Adapter {
 			//clearInterval(query);		
 			//query = setInterval(function(){parentThis._connect()}, BIGINTERVALL);
 
-			//----Alle 2 Sekunden ein PING
+			//----Alle 0,75 Sekunden ein PING
 			pingInterval = setInterval(function () {
 				parentThis.pingMatrix();
 			}, 750);
@@ -274,6 +274,15 @@ class Test extends utils.Adapter {
 				this._changeExclusiveRouting(iIn, iOut, val);
 				this._fixRoutingStates(iIn, iOut, val);
 
+			} else if (id.toUpperCase().includes('ROUTINGOFF_')) {
+				let sTemp = id.substring(id.indexOf('_') + 1);
+				sTemp = sTemp.substring(0, 1);
+				sTemp = sTemp.trim();
+				const iOut = parseInt(sTemp)-1;
+
+				//----iOut is the INDEXed output: 0..7
+				this._changeRoutingOff(iOut);
+				
 			} else if (id.toUpperCase().includes('INPUTGAIN_')) {
 				//----Die ID des InputGains ist einstellig
 				let sID = id.substring(id.toUpperCase().indexOf('GAIN_') + 5);
@@ -399,9 +408,6 @@ class Test extends utils.Adapter {
 				if (i !== pIn) {
 					//----Switch OFF all other inputs
 					this._changeRouting(i, pOut, false);
-					//----Die anderen Routingstates muessen entsprechend gesetzt werden
-					//await this.setStateAsync('routingNode_ID_' + pIDString + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
-
 				}
 			}
 			this._changeRouting(pIn, pOut, pOnOff);
@@ -411,6 +417,8 @@ class Test extends utils.Adapter {
 		//this.log.info('changeRouting(): last CMD in arrCMD:' + this.toHexString( arrCMD[arrCMD.length-1] ) );
 	}
 
+	//----Fixes ioBroker's internal states according to the routing-situation
+	//----Seperated from _changeExlcusiveRouting() since I don't want to write to the hardware from an async function
 	async _fixRoutingStates(pIn, pOut, pOnOff) {
 		//this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
 		if (pIn >= 0 && pIn < 7) {
@@ -421,21 +429,24 @@ class Test extends utils.Adapter {
 					//----Die anderen Routingstates muessen entsprechend gesetzt werden. Erstmal alle anderen AUS
 					await this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (i + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
 					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + (i + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
-
 				}
 			}
 
-			//----Und schliuesslich wir
+			//----and finally the state we want to set
 			let sID = pIn * 8 + pOut + '';
 			while (sID.length < 2) sID = '0' + sID;
 			await this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: pOnOff, ack: true });
 
 		} else {
-			this.log.error('changeExclusiveRouting() via GUI: Coax inputs are not supported yet');
+			this.log.error('_fixRoutingStates() via GUI: Coax inputs are not supported yet');
 		}
-		//this.log.info('changeRouting(): last CMD in arrCMD:' + this.toHexString( arrCMD[arrCMD.length-1] ) );
 	}
 
+	//---- 0..7
+	_changeRoutingOff(pOutIndex){
+		this.log.info('	_changeRoutingOff() via GUI: Out(Index):' + pOutIndex.toString());
+			
+	}
 
 	//----Call fron onReady. Creating everything that can later be changed via GUI
 	async createStates() {
@@ -444,6 +455,7 @@ class Test extends utils.Adapter {
 		this._createState_inputGain();
 		this._createState_outputGain();
 		this._createState_ExclusiveRouting();
+		this._createState_routingOff();
 	}
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
@@ -637,7 +649,7 @@ class Test extends utils.Adapter {
 				await this.setObjectAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + (inVal + 1).toString() + '_OUT_' + (outVal + 1).toString(), {
 					type: 'state',
 					common: {
-						name: 'Exclusive Routing ' + (inVal + 1).toString() + ' -> ' + (outVal + 1).toString(),
+						name: 'Exclusive Routing ' + (inVal + 1).toString() + ' -> ' + (outVal + 1).toString() + '. Deactivates every other input for this output.',
 						type: 'boolean',
 						role: 'indicator',
 						desc: 'Exclusive Routing ' + (inVal + 1).toString() + ' -> ' + (outVal + 1).toString() + '. Deactivates every other input for this output.',
@@ -648,6 +660,28 @@ class Test extends utils.Adapter {
 				});
 			}
 		}
+	}
+
+	//----Actively switch off every input for a dedicated output.
+	//----Allows you to have a dedicated OFF Button in your view.
+	async _createState_routingOff() {
+		parentThis.log.info('createStates(): routingOff');
+		for (let outVal = 0; outVal < 8; outVal++) {
+			await this.setObjectAsync('routingOff_' + (outVal + 1).toString(), {
+				type: 'state',
+				common: {
+					name: 'True: Routing is OFF for output #' + (outVal + 1).toString(),
+					type: 'boolean',
+					role: 'indicator',
+					read: true,
+					write: true,
+					desc: 'True: Routing is OFF for output #' + (outVal + 1).toString(),
+					min: 0,
+				},
+				native: {}
+			});
+		}
+		* /
 	}
 
 	pingMatrix() {
@@ -773,7 +807,7 @@ class Test extends utils.Adapter {
 	}
 
 
-	//----Daten komen von der Hardware an
+	//----Data coming from hardware
 	parseMSG(sMSG) {
 		//this.log.info('parseMSG():' + sMSG);
 		if (sMSG === toHexString(cmdBasicResponse)) {
