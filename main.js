@@ -396,7 +396,7 @@ class Test extends utils.Adapter {
 		this.log.info('changeRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
 		if (pIn >= 0 && pIn < 7) {
 			let tmpCMD = new Buffer([0x5a, 0xa5, 0x01, 0x33, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
-			this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
+			const i = pOnOff ? 1 : 0;
 			const onOff = conv754(i);
 
 			tmpCMD[2] = pIn + 1;
