@@ -858,7 +858,7 @@ class Test extends utils.Adapter {
 					const sValue = sMSG.substring(8, 16);
 					const iValue = HexToFloat32(sValue);
 					const bValue = iValue == 0 ? false : true;
-					//this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
+					this.log.info('_parseMSG(): received routing info. IN:' + (iVal).toString() + ' OUT:' + (iCmd - 50).toString() + '. State:' + bValue.toString());
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
 					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
