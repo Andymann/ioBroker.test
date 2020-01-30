@@ -238,16 +238,16 @@ class Test extends utils.Adapter {
 	}
 
 
-	//----ack==FALSE: Ein State wurde per GUI veraendert
+	//----ack==FALSE: State was changed via GUI
 	changeMatrix(id, val, ack) {
 		if (bConnection && val && !val.ack) {
 			//this.log.info('matrixChanged: tabu=TRUE' );
 			//tabu = true;
 		}
 
-		this.log.info('changeMatrix: ID:' + id.toString());
-		this.log.info('changeMatrix: VAL:' + val.toString());
-		this.log.info('changeMatrix: ACK:' + ack.toString());
+		//this.log.info('changeMatrix: ID:' + id.toString());
+		//this.log.info('changeMatrix: VAL:' + val.toString());
+		//this.log.info('changeMatrix: ACK:' + ack.toString());
 
 		if (ack == false) {
 			//----Change via GUI
@@ -261,7 +261,7 @@ class Test extends utils.Adapter {
 				const idVal = parseInt(sTemp);
 				const iIn = (idVal - (idVal % 8)) / 8;
 				const iOut = idVal - iIn * 8;
-				//----Ein- und Ausgang sind jetzt 0-indiziert
+				//----Ein- und Ausgang sind jetzt 0-indexed
 				this._changeRouting(iIn, iOut, val);
 			} else if (id.toUpperCase().includes('ROUTINGNODE_EXCLUSIVE_ID')) {
 				let sTemp = id.substring(id.indexOf('ID_') + 3);
@@ -270,19 +270,10 @@ class Test extends utils.Adapter {
 				const idVal = parseInt(sTemp);
 				const iIn = (idVal - (idVal % 8)) / 8;
 				const iOut = idVal - iIn * 8;
-				//----Ein- und Ausgang sind jetzt 0-indiziert
+				//----Ein- und Ausgang sind jetzt 0-indexed
 				this._changeExclusiveRouting(iIn, iOut, val);
 				this._fixRoutingStates(iIn, iOut, val);
 
-			} else if (id.toUpperCase().includes('ROUTINGOFF_')) {
-				let sTemp = id.substring(id.indexOf('_') + 1);
-				sTemp = sTemp.substring(0, 1);
-				sTemp = sTemp.trim();
-				const iOut = parseInt(sTemp)-1;
-
-				//----iOut is the INDEXed output: 0..7
-				this._changeRoutingOff(iOut);
-				
 			} else if (id.toUpperCase().includes('INPUTGAIN_')) {
 				//----Die ID des InputGains ist einstellig
 				let sID = id.substring(id.toUpperCase().indexOf('GAIN_') + 5);
@@ -291,7 +282,7 @@ class Test extends utils.Adapter {
 				let idVal = parseInt(sID);
 				idVal -= 1;
 
-				//----0-indiziert
+				//----0-indexed
 				this._changeInputGain(idVal, val);
 			} else if (id.toUpperCase().includes('OUTPUTGAIN_')) {
 				//----Die ID des OutputGains ist einstellig
@@ -300,14 +291,40 @@ class Test extends utils.Adapter {
 				sID = sID.trim();
 				let idVal = parseInt(sID);
 				idVal -= 1;
-
-				//----0-indiziert
+				//----0-indexed
 				this._changeOutputGain(idVal, val);
+			} else if (id.toUpperCase().includes('MUTE_')) {
+				let sID = id.substring(id.toUpperCase().indexOf('MUTE_') + 5);
+				sID = sID.trim();
+				let idVal = parseInt(sID);
+				idVal -= 1;
+				//----0-indexed
+				this._changeMuting(idVal, val);
 			}
 		} else {
 			//----Won't happen. If we are connected to this adapter then it's impossible to change attributes from the
 			//----hardware-side (i.e. a button on the front) because the hardware is locked.
 		}
+	}
+
+	//----0..7
+	//----TRUE/ FALSE
+	//----Muting OUTPUT
+	_changeMuting(pID, pOnOff) {
+		const i = pOnOff ? 1 : 0;
+		const arrVal = conv754(i);
+		let tmpCMD = new Buffer([0x5a, 0xa5, 0x01 /* Ouput number 7--14*/, 0x01 /* Mute */, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
+
+		tmpCMD[2] = pID + 7;
+		tmpCMD[4] = arrVal[0];
+		tmpCMD[5] = arrVal[1];
+		tmpCMD[6] = arrVal[2];
+		tmpCMD[7] = arrVal[3];
+
+		//----fix checksum
+		tmpCMD = convertArray(tmpCMD);
+		this.log.info('changeMuting(): adding:' + toHexString(tmpCMD));
+		arrCMD.push(tmpCMD);
 	}
 
 	_changeMainVolume(val) {
@@ -350,6 +367,7 @@ class Test extends utils.Adapter {
 		}
 	}
 
+
 	//---- pID: 0..7
 	//---- pVal: 0..100
 	_changeOutputGain(pID, pVal) {
@@ -378,7 +396,7 @@ class Test extends utils.Adapter {
 		this.log.info('changeRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
 		if (pIn >= 0 && pIn < 7) {
 			let tmpCMD = new Buffer([0x5a, 0xa5, 0x01, 0x33, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
-			const i = pOnOff ? 1 : 0;
+			this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
 			const onOff = conv754(i);
 
 			tmpCMD[2] = pIn + 1;
@@ -442,11 +460,7 @@ class Test extends utils.Adapter {
 		}
 	}
 
-	//---- 0..7
-	_changeRoutingOff(pOutIndex){
-		this.log.info('	_changeRoutingOff() via GUI: Out(Index):' + pOutIndex.toString());
-			
-	}
+
 
 	//----Call fron onReady. Creating everything that can later be changed via GUI
 	async createStates() {
@@ -455,7 +469,7 @@ class Test extends utils.Adapter {
 		this._createState_inputGain();
 		this._createState_outputGain();
 		this._createState_ExclusiveRouting();
-		this._createState_routingOff();
+		this._createState_Muting();
 	}
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
@@ -662,26 +676,24 @@ class Test extends utils.Adapter {
 		}
 	}
 
-	//----Actively switch off every input for a dedicated output.
-	//----Allows you to have a dedicated OFF Button in your view.
-	async _createState_routingOff() {
-		parentThis.log.info('createStates(): routingOff');
-		for (let outVal = 0; outVal < 8; outVal++) {
-			await this.setObjectAsync('routingOff_' + (outVal + 1).toString(), {
+	async _createState_Muting() {
+		parentThis.log.info('createStates(): Muting');
+		for (let i = 0; i < 8; i++) {
+			await this.setObjectAsync('mute_' + (i + 1).toString(), {
 				type: 'state',
 				common: {
-					name: 'True: Routing is OFF for output #' + (outVal + 1).toString(),
+					name: 'Mute output #' + i.toString(),
 					type: 'boolean',
 					role: 'indicator',
+					desc: 'Mute output #' + i.toString(),
 					read: true,
-					write: true,
-					desc: 'True: Routing is OFF for output #' + (outVal + 1).toString(),
-					min: 0,
+					write: true
 				},
 				native: {}
 			});
 		}
 	}
+
 
 	pingMatrix() {
 		if ((bConnection == true)/*&&(bWaitingForResponse==false)*/ && (bWaitQueue == false)) {
@@ -856,7 +868,15 @@ class Test extends utils.Adapter {
 				//this.log.info('_parseMSG(): received OUTPUT Value');
 				const sCmd = sMSG.substring(6, 8);
 				const iCmd = parseInt(sCmd, 16);
-				if (iCmd == 2) {
+				if (iCmd == 1) {
+					//----Mute
+					this.log.info('_parseMSG(): received OUTPUT Value for MUTE. Output(Index):' + (iVal-7).toString());
+					const sValue = sMSG.substring(8, 16);
+					const iValue = HexToFloat32(sValue);
+					const bOnOff = (iValue>0) ? true : false;
+					this.setStateAsync('mute_' + (iVal - 7).toString(), { val: bOnOff, ack: true });
+
+				}else if (iCmd == 2) {
 					//----Gain
 					//this.log.info('_parseMSG(): received OUTPUT Value for GAIN:' + sMSG.substring(8, 16));
 					const sValue = sMSG.substring(8, 16);
