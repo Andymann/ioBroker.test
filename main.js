@@ -884,7 +884,7 @@ class Test extends utils.Adapter {
 					//this.log.info('_parseMSG(): received outputGain from Matrix. Original Value:' + sValue.toString());
 					iValue = map(iValue, -40, 0, 0, 100); //this.simpleMap(0, 100, iVal);
 					//this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
-					this.setStateAsync('outputGain_' + (iVal - 7).toString(), { val: iValue, ack: true });
+					this.setStateAsync('outputGain_' + (iVal - 7+1).toString(), { val: iValue, ack: true });
 				}
 			}
 		}
