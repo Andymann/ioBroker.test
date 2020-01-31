@@ -292,7 +292,6 @@ class Test extends utils.Adapter {
 				sID = sID.trim();
 				let idVal = parseInt(sID);
 				idVal -= 1;
-
 				//----0-indexed
 				this._changeInputGain(idVal, val);
 			} else if (id.toUpperCase().includes('OUTPUTGAIN_')) {
@@ -398,6 +397,9 @@ class Test extends utils.Adapter {
 		tmpCMD = convertArray(tmpCMD);
 		this.log.info('changeOutputGain(): adding:' + toHexString(tmpCMD));
 		arrCMD.push(tmpCMD);
+
+		//----Displaying the output gain in full numbers
+		this.setStateAsync('outputGainDisplay_' + (pID + 1).toString(), { val: Math.round(pVal), ack: true });
 	}
 
 	//----IN: 0-7
@@ -430,9 +432,9 @@ class Test extends utils.Adapter {
 	//----IN: 0-7
 	//----OUT:0-8
 	//----pOnOff: TRUE / FALSE
+	//----Exclusive Routing can only be switched ON via GUI. Everythin else is handled via the adapter's internal logic
 	_changeExclusiveRouting(pIn, pOut, pOnOff) {
 		this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
-
 
 		if (pIn >= 0 && pIn < 7) {
 			for (let i = 0; i < 8; i++) {
@@ -496,6 +498,7 @@ class Test extends utils.Adapter {
 		this._createState_outputGain();
 		this._createState_ExclusiveRouting();
 		this._createState_Muting();
+		this._createState_outputGain_Display();
 	}
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
@@ -646,6 +649,27 @@ class Test extends utils.Adapter {
 					read: true,
 					write: true,
 					desc: 'Output Gain' + (outVal + 1).toString(),
+					min: 0,
+					max: 100
+				},
+				native: {}
+			});
+		}
+	}
+
+	//----Displays the output gain in whole numbers
+	async_createState_outputGain_Display(){
+		parentThis.log.info('createStates(): outputGain_Display');
+		for (let outVal = 0; outVal < 8; outVal++) {
+			await this.setObjectAsync('outputGainDisplay_' + (outVal + 1).toString(), {
+				type: 'state',
+				common: {
+					name: 'Output Gain display in whole numbers ' + (outVal + 1).toString(),
+					type: 'number',
+					role: 'level.volume',
+					read: true,
+					write: false,
+					desc: 'Output Gain Display in whole numbers' + (outVal + 1).toString(),
 					min: 0,
 					max: 100
 				},
@@ -913,6 +937,7 @@ class Test extends utils.Adapter {
 					iValue = map(iValue, -40, 0, 0, 100); //this.simpleMap(0, 100, iVal);
 					//this.log.info('_parseMSG(): received gain for output ' + (iVal - 7).toString() + ' from Hardware. Processed Value:' + iValue.toString());
 					this.setStateAsync('outputGain_' + (iVal - 7 + 1).toString(), { val: iValue, ack: true });
+					this.setStateAsync('outputGainDisplay_' + (iVal - 7 + 1).toString(), { val: Math.round(iValue), ack: true });
 				}
 			}
 		}
