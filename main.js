@@ -382,6 +382,10 @@ class Test extends utils.Adapter {
 	//---- pVal: 0..100
 	_changeOutputGain(pID, pVal) {
 		this.log.info('changeOutputGain via GUI. ID(Index):' + pID.toString() + ' VAL:' + pVal.toString());
+
+		//----Displaying the output gain in full numbers
+		this.setStateAsync('outputGainDisplay_' + (pID + 1).toString(), { val: Math.round(pVal), ack: true });
+		
 		pVal = map(pVal, 0, 100, -40, 0);
 		this.log.info('changeOutputGain via GUI: VAL(neu):' + pVal.toString());
 		const arrVal = conv754(pVal);
@@ -398,8 +402,7 @@ class Test extends utils.Adapter {
 		this.log.info('changeOutputGain(): adding:' + toHexString(tmpCMD));
 		arrCMD.push(tmpCMD);
 
-		//----Displaying the output gain in full numbers
-		this.setStateAsync('outputGainDisplay_' + (pID + 1).toString(), { val: Math.round(pVal), ack: true });
+		
 	}
 
 	//----IN: 0-7
