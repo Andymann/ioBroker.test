@@ -658,7 +658,7 @@ class Test extends utils.Adapter {
 	}
 
 	//----Displays the output gain in whole numbers
-	async_createState_outputGain_Display(){
+	async _createState_outputGain_Display(){
 		parentThis.log.info('createStates(): outputGain_Display');
 		for (let outVal = 0; outVal < 8; outVal++) {
 			await this.setObjectAsync('outputGainDisplay_' + (outVal + 1).toString(), {
