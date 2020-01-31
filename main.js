@@ -433,19 +433,28 @@ class Test extends utils.Adapter {
 	_changeExclusiveRouting(pIn, pOut, pOnOff) {
 		this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
 
-		//----Exclusive routing can only be switched ON via Gui.
-		pOnOff = true;
+
 		if (pIn >= 0 && pIn < 7) {
 			for (let i = 0; i < 8; i++) {
 				if (i !== pIn) {
 					//----Switch OFF all other inputs
 					this._changeRouting(i, pOut, false);
+
+					let sID = pIn * 8 + i + '';
+					while (sID.length < 2) sID = '0' + sID;
+					this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: false, ack: true });
 				}
 			}
-			this._changeRouting(pIn, pOut, pOnOff);
+			//----Exclusive routing can only be switched ON via Gui.
+			this._changeRouting(pIn, pOut, true);
+			
+			let sID = pIn * 8 + pOut + '';
+			while (sID.length < 2) sID = '0' + sID;
+			this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: true, ack: true });
 		} else {
 			this.log.error('changeExclusiveRouting() via GUI: Coax inputs are not supported yet');
 		}
+
 
 		//this.log.info('changeRouting(): last CMD in arrCMD:' + this.toHexString( arrCMD[arrCMD.length-1] ) );
 	}
