@@ -35,7 +35,7 @@ const cmdTransmissionDone = new Buffer([0x5a, 0xa5, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1
 const cmdVol000 = new Buffer([0x5a, 0xa5, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
 const cmdWaitQueue_1000 = new Buffer([0x03, 0xe8]);
 
-let arrRouting=[false, false, false, false, false, false, false, false,
+let arrRouting = [false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false,
@@ -432,6 +432,9 @@ class Test extends utils.Adapter {
 	//----pOnOff: TRUE / FALSE
 	_changeExclusiveRouting(pIn, pOut, pOnOff) {
 		this.log.info('changeExclusiveRouting() via GUI: In(Index):' + pIn.toString() + ' Out(Index):' + pOut.toString() + ' pOnOff:' + pOnOff.toString());
+
+		//----Exclusive routing can only be switched ON via Gui.
+		pOnOff = true;
 		if (pIn >= 0 && pIn < 7) {
 			for (let i = 0; i < 8; i++) {
 				if (i !== pIn) {
@@ -443,6 +446,7 @@ class Test extends utils.Adapter {
 		} else {
 			this.log.error('changeExclusiveRouting() via GUI: Coax inputs are not supported yet');
 		}
+
 		//this.log.info('changeRouting(): last CMD in arrCMD:' + this.toHexString( arrCMD[arrCMD.length-1] ) );
 	}
 
@@ -875,8 +879,7 @@ class Test extends utils.Adapter {
 					let sID = (0 + (iVal - 1) * 8 + (iCmd - 50 - 1)).toString();
 					while (sID.length < 2) sID = '0' + sID;
 					this.setStateAsync('routingNode_ID_' + sID + '_IN_' + (iVal).toString() + '_OUT_' + (iCmd - 50).toString(), { val: bValue, ack: true });
-					//this.setExclusiveRoutingState(iVal-1, iCmd-51, bValue);
-					arrRouting[ ( (iVal - 1) * 8 + (iCmd - 50 - 1)) ]=bValue;
+					arrRouting[((iVal - 1) * 8 + (iCmd - 50 - 1))] = bValue;
 				}
 			} else if (iVal >= 7 && iVal <= 14) {
 				//----Output....
@@ -904,37 +907,32 @@ class Test extends utils.Adapter {
 			}
 		}
 	}
-	//----0..7
-	//....0..7
-	// true / false
-	setExclusiveRoutingState(pIn, pOut, pVal) {
-		this.log.info('setExclusiveRoutingState() IN(Index):' + pIn.toString() + ' OUT(Index):' + pOut.toString() + ' VAL:' + pVal.toString());
-	}
 
-	
-	//----After 'Transmission Done' is received
+
+	//----After 'Transmission Done' is received 
+	//----We organize the internal states to reflect the hardware's situation.
 	async processExclusiveRoutingStates() {
 		this.log.info('processExclusiveRoutingStates()');
-		
+
 		for (let i = 0; i < 8; i++) {
 			let iOnCounter = 0;
-			let iID=0;
+			let iID = 0;
 			let sIn;
 			let sOut;
 			let sID;
 			for (let o = 0; o < 8; o++) {
-				iID= i*8+o;
-				if(arrRouting[iID]==true){
+				iID = i * 8 + o;
+				if (arrRouting[iID] == true) {
 					this.log.info('processExclusiveRoutingStates() State is TRUE for ID ' + iID.toString());
-					sID= iID.toString();
+					sID = iID.toString();
 					while (sID.length < 2) sID = '0' + sID;
 					iOnCounter++;
-					sIn=(i+1).toString();
-					sOut=(o+1).toString();
+					sIn = (i + 1).toString();
+					sOut = (o + 1).toString();
 				}
 			}
-			if(iOnCounter==1){
-				this.log.info('processExclusiveRoutingStates() setState():'+'routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut );
+			if (iOnCounter == 1) {
+				this.log.info('processExclusiveRoutingStates() setState():' + 'routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut);
 				await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
 			}
 		}
