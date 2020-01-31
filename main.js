@@ -921,18 +921,21 @@ class Test extends utils.Adapter {
 			let iID=0;
 			let sIn;
 			let sOut;
+			let sID;
 			for (let o = 0; o < 8; o++) {
 				iID= i*8+o;
 				if(arrRouting[iID]==true){
 					this.log.info('processExclusiveRoutingStates() State is TRUE for ID ' + iID.toString());
+					sID= iID.toString();
+					while (sID.length < 2) sID = '0' + sID;
 					iOnCounter++;
 					sIn=(i+1).toString();
 					sOut=(o+1).toString();
 				}
 			}
 			if(iOnCounter==1){
-				this.log.info('processExclusiveRoutingStates() setState():'+'routingNode_Exclusive_ID_' + iID.toString() + '__IN_' + sIn + '_OUT_' + sOut );
-				await this.setStateAsync('routingNode_Exclusive_ID_' + iID.toString() + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
+				this.log.info('processExclusiveRoutingStates() setState():'+'routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut );
+				await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
 			}
 		}
 
