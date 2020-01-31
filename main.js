@@ -476,10 +476,10 @@ class Test extends utils.Adapter {
 			}
 
 			//----and finally the state we want to set
-			let sID = pIn * 8 + pOut + '';
+			let sID = (pIn * 8 + pOut).toString();
 			while (sID.length < 2) sID = '0' + sID;
 			await this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: true, ack: true });
-			await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + (i + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: true, ack: true });
+			await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: true, ack: true });
 
 		} else {
 			this.log.error('_fixRoutingStates() via GUI: Coax inputs are not supported yet');
