@@ -385,7 +385,7 @@ class Test extends utils.Adapter {
 
 		//----Displaying the output gain in full numbers
 		this.setStateAsync('outputGainDisplay_' + (pID + 1).toString(), { val: Math.round(pVal), ack: true });
-		
+
 		pVal = map(pVal, 0, 100, -40, 0);
 		this.log.info('changeOutputGain via GUI: VAL(neu):' + pVal.toString());
 		const arrVal = conv754(pVal);
@@ -402,7 +402,7 @@ class Test extends utils.Adapter {
 		this.log.info('changeOutputGain(): adding:' + toHexString(tmpCMD));
 		arrCMD.push(tmpCMD);
 
-		
+
 	}
 
 	//----IN: 0-7
@@ -452,7 +452,7 @@ class Test extends utils.Adapter {
 			}
 			//----Exclusive routing can only be switched ON via Gui.
 			this._changeRouting(pIn, pOut, true);
-			
+
 			//let sID = pIn * 8 + pOut + '';
 			//while (sID.length < 2) sID = '0' + sID;
 			//this.setStateAsync('routingNode_ID_' + sID + '__IN_' + (pIn + 1).toString() + '_OUT_' + (pOut + 1).toString(), { val: true, ack: true });
@@ -502,6 +502,7 @@ class Test extends utils.Adapter {
 		this._createState_ExclusiveRouting();
 		this._createState_Muting();
 		this._createState_outputGain_Display();
+		this._createState_Labels();
 	}
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
@@ -661,7 +662,7 @@ class Test extends utils.Adapter {
 	}
 
 	//----Displays the output gain in whole numbers
-	async _createState_outputGain_Display(){
+	async _createState_outputGain_Display() {
 		parentThis.log.info('createStates(): outputGain_Display');
 		for (let outVal = 0; outVal < 8; outVal++) {
 			await this.setObjectAsync('outputGainDisplay_' + (outVal + 1).toString(), {
@@ -745,6 +746,40 @@ class Test extends utils.Adapter {
 				native: {}
 			});
 		}
+	}
+
+	async _createState_Labels() {
+		parentThis.log.info('createStates(): Labels');
+		for (let i = 0; i < 8; i++) {
+			await this.setObjectAsync('_label_Input_' + (i + 1).toString(), {
+				type: 'state',
+				common: {
+					'name': 'Label for Input #' + (i + 1).toString(),        // mandatory, default _id ??
+					'def': 'In ' + (i + 1).toString(),                     // optional,  default ''
+					'type': 'string',               // optional,  default 'string'
+					'read': true,                   // mandatory, default true
+					'write': false,                  // mandatory, default false
+					'role': 'info',   // mandatory
+					'desc': 'Label for Input #' + (i + 1).toString()
+				},
+				native: {}
+			});
+
+			await this.setObjectAsync('_label_Output_' + (i + 1).toString(), {
+				type: 'state',
+				common: {
+					'name': 'Label for Output #' + (i + 1).toString(),        // mandatory, default _id ??
+					'def': 'Out ' + (i + 1).toString(),                     // optional,  default ''
+					'type': 'string',               // optional,  default 'string'
+					'read': true,                   // mandatory, default true
+					'write': false,                  // mandatory, default false
+					'role': 'info',   // mandatory
+					'desc': 'Label for Output #' + (i + 1).toString()
+				},
+				native: {}
+			});
+		}
+
 	}
 
 
