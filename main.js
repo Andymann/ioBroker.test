@@ -758,7 +758,7 @@ class Test extends utils.Adapter {
 					'def': 'In ' + (i + 1).toString(),                     // optional,  default ''
 					'type': 'string',               // optional,  default 'string'
 					'read': true,                   // mandatory, default true
-					'write': false,                  // mandatory, default false
+					'write': true,                  // mandatory, default false
 					'role': 'info',   // mandatory
 					'desc': 'Label for Input #' + (i + 1).toString()
 				},
@@ -772,7 +772,7 @@ class Test extends utils.Adapter {
 					'def': 'Out ' + (i + 1).toString(),                     // optional,  default ''
 					'type': 'string',               // optional,  default 'string'
 					'read': true,                   // mandatory, default true
-					'write': false,                  // mandatory, default false
+					'write': true,                  // mandatory, default false
 					'role': 'info',   // mandatory
 					'desc': 'Label for Output #' + (i + 1).toString()
 				},
