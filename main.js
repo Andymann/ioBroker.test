@@ -167,15 +167,22 @@ class Test extends utils.Adapter {
 		this.connectMatrix();
 	}
 
-	disconnectMatrix() {
-		this.log.info('disConnectMatrix()');
-		matrix.destroy();
+	disconnectMatrix() {		
+		if (bSerialCommunication == true) {
+			this.log.info('disConnectMatrix() Serial');
+			if (matrix.isOpen) {
+				matrix.close();
+			}
+		}else{
+			this.log.info('disConnectMatrix() Network');
+			matrix.destroy();
+		}	
 	}
 
 	connectMatrix(cb) {
 
 		//this.log.info('connectMatrix()');
-		let parser; 
+		let parser;
 		arrCMD = [];
 
 		if (bSerialCommunication == true) {
@@ -190,23 +197,21 @@ class Test extends utils.Adapter {
 			matrix = new serialport('/dev/ttyUSB0', options);
 			parser = matrix.pipe(new ByteLength({ length: 1 }));
 
-			//matrix.connect( new function () {
-				if (bConnection == false) {
-					parentThis.log.debug('connectMatrix() SERIAL. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
-					arrCMD.push(cmdConnect);
-					arrCMD.push(cmdWaitQueue_1000);
-				} else {
-					parentThis.log.debug('_connect() SERIAL.bConnection==true. Nichts tun');
-				}
-				if (pingInterval) {
-					clearInterval(pingInterval);
-				}
-	
-				//----Alle 0,75 Sekunden ein PING
-				pingInterval = setInterval(function () {
-					parentThis.pingMatrix();
-				}, 750);
-			//});
+			if (bConnection == false) {
+				parentThis.log.debug('connectMatrix() Serial. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
+				arrCMD.push(cmdConnect);
+				arrCMD.push(cmdWaitQueue_1000);
+			} else {
+				parentThis.log.debug('_connect() Serial. bConnection==true. Nichts tun');
+			}
+			if (pingInterval) {
+				clearInterval(pingInterval);
+			}
+
+			//----Alle 0,75 Sekunden ein PING
+			pingInterval = setInterval(function () {
+				parentThis.pingMatrix();
+			}, 750);
 
 		} else {
 			this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
@@ -214,16 +219,16 @@ class Test extends utils.Adapter {
 
 			matrix.connect(this.config.port, this.config.host, function () {
 				if (bConnection == false) {
-					parentThis.log.debug('connectMatrix(). bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
+					parentThis.log.debug('connectMatrix() Network. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
 					arrCMD.push(cmdConnect);
 					arrCMD.push(cmdWaitQueue_1000);
 				} else {
-					parentThis.log.debug('_connect().bConnection==true. Nichts tun');
+					parentThis.log.debug('_connect() Network. bConnection==true. Nichts tun');
 				}
 				if (pingInterval) {
 					clearInterval(pingInterval);
 				}
-	
+
 				//----Alle 0,75 Sekunden ein PING
 				pingInterval = setInterval(function () {
 					parentThis.pingMatrix();
@@ -285,7 +290,7 @@ class Test extends utils.Adapter {
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
 			parentThis.processIncoming(chunk);
 		});
-		
+
 	}
 
 
