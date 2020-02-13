@@ -190,7 +190,7 @@ class Test extends utils.Adapter {
 			matrix = new serialport('/dev/ttyUSB0', options);
 			parser = matrix.pipe(new ByteLength({ length: 1 }));
 
-			matrix.connect( new function () {
+			//matrix.connect( new function () {
 				if (bConnection == false) {
 					parentThis.log.debug('connectMatrix() SERIAL. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
 					arrCMD.push(cmdConnect);
@@ -206,7 +206,7 @@ class Test extends utils.Adapter {
 				pingInterval = setInterval(function () {
 					parentThis.pingMatrix();
 				}, 750);
-			});
+			//});
 
 		} else {
 			this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
