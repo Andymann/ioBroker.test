@@ -756,7 +756,7 @@ class Test extends utils.Adapter {
 				common: {
 					'name': 'Label for Input #' + (i + 1).toString(),        // mandatory, default _id ??
 					'def': 'In ' + (i + 1).toString(),                     // optional,  default ''
-					'type': 'string',               // optional,  default 'string'
+					'type': 'info',               // optional,  default 'string'
 					'read': true,                   // mandatory, default true
 					'write': true,                  // mandatory, default false
 					'role': 'info',   // mandatory
@@ -770,7 +770,7 @@ class Test extends utils.Adapter {
 				common: {
 					'name': 'Label for Output #' + (i + 1).toString(),        // mandatory, default _id ??
 					'def': 'Out ' + (i + 1).toString(),                     // optional,  default ''
-					'type': 'string',               // optional,  default 'string'
+					'type': 'info',               // optional,  default 'string'
 					'read': true,                   // mandatory, default true
 					'write': true,                  // mandatory, default false
 					'role': 'info',   // mandatory
@@ -995,19 +995,27 @@ class Test extends utils.Adapter {
 			let sID;
 			for (let o = 0; o < 8; o++) {
 				iID = i * 8 + o;
+				sID = iID.toString();
+				while (sID.length < 2) sID = '0' + sID;
+				iOnCounter++;
+				sIn = (i + 1).toString();
+				sOut = (o + 1).toString();
 				if (arrRouting[iID] == true) {
 					this.log.info('processExclusiveRoutingStates() State is TRUE for ID ' + iID.toString());
-					sID = iID.toString();
-					while (sID.length < 2) sID = '0' + sID;
-					iOnCounter++;
-					sIn = (i + 1).toString();
-					sOut = (o + 1).toString();
+					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
+				}else{
+					this.log.info('processExclusiveRoutingStates() State is FALSE for ID ' + iID.toString());
+					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: false, ack: true });
 				}
 			}
+			/*
 			if (iOnCounter == 1) {
 				this.log.info('processExclusiveRoutingStates() setState():' + 'routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut);
 				await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
+			} else {
+				this.log.info('processExclusiveRoutingStates(). iOnCounter=' + iOnCounter.toString() + '. Nothing set.');
 			}
+			*/
 		}
 
 
