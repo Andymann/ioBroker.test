@@ -196,7 +196,7 @@ class Test extends utils.Adapter {
 			};
 
 			matrix = new serialport('/dev/ttyUSB0', options);
-			parser = matrix.pipe(new ByteLength({ length: 1 }));
+			parser = matrix.pipe(new ByteLength({ length: 2 }));
 
 			if (bConnection == false) {
 				parentThis.log.debug('connectMatrix() Serial. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
