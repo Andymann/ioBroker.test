@@ -209,10 +209,10 @@ class Test extends utils.Adapter {
 				clearInterval(pingInterval);
 			}
 
-			//----Alle 0,75 Sekunden ein PING
+			//----Alle 1,5 Sekunden ein PING
 			pingInterval = setInterval(function () {
 				parentThis.pingMatrix();
-			}, 750);
+			}, 1500);
 
 		} else {
 			this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
