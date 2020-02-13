@@ -187,7 +187,7 @@ class Test extends utils.Adapter {
 				parity: 'none'
 			};
 
-			matrix = new SerialPort('/dev/ttyUSB0', options);
+			matrix = new serialport('/dev/ttyUSB0', options);
 			parser = matrix.pipe(new ByteLength({ length: 1 }));
 
 			matrix.connect( function () {
