@@ -196,7 +196,7 @@ class Test extends utils.Adapter {
 			};
 
 			matrix = new serialport('/dev/ttyUSB0', options);
-			parser = matrix.pipe(new ByteLength({ length: 2 }));
+			parser = matrix.pipe(new ByteLength({ length: 1 }));
 
 			if (bConnection == false) {
 				parentThis.log.debug('connectMatrix() Serial. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
@@ -212,7 +212,7 @@ class Test extends utils.Adapter {
 			//----Alle 1,5 Sekunden ein PING
 			pingInterval = setInterval(function () {
 				parentThis.pingMatrix();
-			}, 1500);
+			}, 750);
 
 		} else {
 			this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
@@ -239,9 +239,12 @@ class Test extends utils.Adapter {
 
 
 		matrix.on('data', function (chunk) {
+			if(bSerialCommunication==false){
+				parentThis.processIncoming(chunk);
+			}
 			//parentThis.log.info('matrix.onData()');
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
-			parentThis.processIncoming(chunk);
+			
 		});
 
 		matrix.on('timeout', function (e) {
@@ -289,7 +292,10 @@ class Test extends utils.Adapter {
 		parser.on('data', function (chunk) {
 			//parentThis.log.info('matrix.onData()');
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
-			parentThis.processIncoming(chunk);
+			if(bSerialCommunication==true){
+				parentThis.processIncoming(chunk);
+			}
+			//parentThis.processIncoming(chunk);
 		});
 
 	}
