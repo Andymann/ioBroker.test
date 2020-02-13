@@ -1,77 +1,77 @@
 {
-	"common": {
-		"name": "test",
-		"version": "0.0.1",
-		"news": {
-			"0.0.1": {
-				"en": "initial release",
-				"de": "Erstveröffentlichung",
-				"ru": "Начальная версия",
-				"pt": "lançamento inicial",
-				"nl": "Eerste uitgave",
-				"fr": "Première version",
-				"it": "Versione iniziale",
-				"es": "Versión inicial",
-				"pl": "Pierwsze wydanie",
-				"zh-cn": "首次出版"
-			}
-		},
-		"title": "test",
-		"titleLang": {
-			"en": "test",
-			"de": "Prüfung",
-			"ru": "тестовое задание",
-			"pt": "teste",
-			"nl": "test",
-			"fr": "tester",
-			"it": "test",
-			"es": "prueba",
-			"pl": "test",
-			"zh-cn": "测试"
-		},
-		"desc": {
-			"en": "Testadapter",
-			"de": "Testadapter",
-			"ru": "Testadapter",
-			"pt": "Testadapter",
-			"nl": "Testadapter",
-			"fr": "Testadapter",
-			"it": "Testadapter",
-			"es": "Testadapter",
-			"pl": "Testadapter",
-			"zh-cn": "测试适配器"
-		},
-		"authors": [
-			"Andy <info@andyland.info>"
-		],
-		"keywords": [
-			"ioBroker",
-			"template",
-			"Smart Home",
-			"home automation"
-		],
-		"license": "MIT",
-		"platform": "Javascript/Node.js",
-		"main": "main.js",
-		"icon": "test.png",
-		"enabled": true,
-		"extIcon": "https://raw.githubusercontent.com/andymann/ioBroker.test/master/admin/test.png",
-		"readme": "https://github.com/andymann/ioBroker.test/blob/master/README.md",
-		"loglevel": "info",
-		"mode": "daemon",
-		"type": "multimedia",
-		"compact": true,
-		"materialize": true,
-		"dependencies": [
-			{
-				"js-controller": ">=1.4.2"
-			}
-		]
-	},
-	"native": {
-		"host": "192.168.1.210",
+    "common": {
+        "name": "test",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "test",
+        "titleLang": {
+            "en": "test",
+            "de": "Prüfung",
+            "ru": "тестовое задание",
+            "pt": "teste",
+            "nl": "test",
+            "fr": "tester",
+            "it": "test",
+            "es": "prueba",
+            "pl": "test",
+            "zh-cn": "测试"
+        },
+        "desc": {
+            "en": "Testadapter",
+            "de": "Testadapter",
+            "ru": "Testadapter",
+            "pt": "Testadapter",
+            "nl": "Testadapter",
+            "fr": "Testadapter",
+            "it": "Testadapter",
+            "es": "Testadapter",
+            "pl": "Testadapter",
+            "zh-cn": "测试适配器"
+        },
+        "authors": [
+            "Andy <info@andyland.info>"
+        ],
+        "keywords": [
+            "ioBroker",
+            "template",
+            "Smart Home",
+            "home automation"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "test.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/andymann/ioBroker.test/master/admin/test.png",
+        "readme": "https://github.com/andymann/ioBroker.test/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "multimedia",
+        "compact": true,
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=1.4.2"
+            }
+        ]
+    },
+    "native": {
+        "host": "192.168.1.210",
         "port": 1024
-	},
-	"objects": [],
-	"instanceObjects": []
+    },
+    "objects": [],
+    "instanceObjects": []
 }

@@ -8,9 +8,15 @@
 // you need to create an adapter
 const utils = require('@iobroker/adapter-core');
 
+
 // Load your modules here, e.g.:
 // const fs = require('fs');
 const net = require('net');
+const serialport = require('serialport');
+const ByteLength = require('@serialport/parser-byte-length');
+//const port = new SerialPort('/dev/ttyUSB0', {baudrate: 115200});
+//const parser = port.pipe(new ByteLength({length: 1}));
+
 let matrix = null;
 
 let parentThis;
@@ -26,6 +32,9 @@ let bWaitQueue = false;
 let bFirstPing = true;
 let bHasIncomingData = false;
 let in_msg = '';
+
+//----TEST
+let bSerialCommunication = true;
 
 const TIMEOUT = 5000;
 const cmdConnect = new Buffer([0x5a, 0xa5, 0x14, 0x00, 0x40, 0x00, 0x00, 0x00, 0x0a, 0x5d]);
@@ -164,41 +173,64 @@ class Test extends utils.Adapter {
 	}
 
 	connectMatrix(cb) {
-		this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
+
 		//this.log.info('connectMatrix()');
-
+		let parser; 
 		arrCMD = [];
-		matrix = new net.Socket();
-		matrix.connect(this.config.port, this.config.host, function () {
-			if (bConnection == false) {
-				parentThis.log.debug('connectMatrix(). bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
-				arrCMD.push(cmdConnect);
-				arrCMD.push(cmdWaitQueue_1000);
-			} else {
-				parentThis.log.debug('_connect().bConnection==true. Nichts tun');
-			}
-			if (pingInterval) {
-				clearInterval(pingInterval);
-			}
 
-			//clearInterval(query);		
-			//query = setInterval(function(){parentThis._connect()}, BIGINTERVALL);
+		if (bSerialCommunication == true) {
+			this.log.info('connectMatrix(): Serial Port Mode');
+			const options = {
+				baudRate: 115200,
+				dataBits: 8,
+				stopBits: 1,
+				parity: 'none'
+			};
 
-			//----Alle 0,75 Sekunden ein PING
-			pingInterval = setInterval(function () {
-				parentThis.pingMatrix();
-			}, 750);
+			matrix = new SerialPort('/dev/ttyUSB0', options);
+			parser = matrix.pipe(new ByteLength({ length: 1 }));
 
-			//----Queue
-			//  clearInterval(cmdInterval);
-			//  cmdInterval = setInterval(function() {
-			//	parentThis.processCMD();
-			//  }, 50);
+			matrix.connect( function () {
+				if (bConnection == false) {
+					parentThis.log.debug('connectMatrix() SERIAL. bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
+					arrCMD.push(cmdConnect);
+					arrCMD.push(cmdWaitQueue_1000);
+				} else {
+					parentThis.log.debug('_connect() SERIAL.bConnection==true. Nichts tun');
+				}
+				if (pingInterval) {
+					clearInterval(pingInterval);
+				}
+	
+				//----Alle 0,75 Sekunden ein PING
+				pingInterval = setInterval(function () {
+					parentThis.pingMatrix();
+				}, 750);
+			});
 
-			//  if (cb) {
-			//	cb();
-			//  }
-		});
+		} else {
+			this.log.info('connectMatrix():' + this.config.host + ':' + this.config.port);
+			matrix = new net.Socket();
+
+			matrix.connect(this.config.port, this.config.host, function () {
+				if (bConnection == false) {
+					parentThis.log.debug('connectMatrix(). bConnection==false, sending CMDCONNECT:' + toHexString(cmdConnect));
+					arrCMD.push(cmdConnect);
+					arrCMD.push(cmdWaitQueue_1000);
+				} else {
+					parentThis.log.debug('_connect().bConnection==true. Nichts tun');
+				}
+				if (pingInterval) {
+					clearInterval(pingInterval);
+				}
+	
+				//----Alle 0,75 Sekunden ein PING
+				pingInterval = setInterval(function () {
+					parentThis.pingMatrix();
+				}, 750);
+			});
+		}
+
 
 		matrix.on('data', function (chunk) {
 			//parentThis.log.info('matrix.onData()');
@@ -246,6 +278,14 @@ class Test extends utils.Adapter {
 			parentThis.log.error('AudioMatrix ended');
 			//parentThis.setState('info.connection', false, true);
 		});
+
+
+		parser.on('data', function (chunk) {
+			//parentThis.log.info('matrix.onData()');
+			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
+			parentThis.processIncoming(chunk);
+		});
+		
 	}
 
 
@@ -1003,7 +1043,7 @@ class Test extends utils.Adapter {
 				if (arrRouting[iID] == true) {
 					this.log.info('processExclusiveRoutingStates() State is TRUE for ID ' + iID.toString());
 					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
-				}else{
+				} else {
 					this.log.info('processExclusiveRoutingStates() State is FALSE for ID ' + iID.toString());
 					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: false, ack: true });
 				}
