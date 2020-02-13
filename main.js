@@ -172,6 +172,7 @@ class Test extends utils.Adapter {
 			this.log.info('disConnectMatrix() Serial');
 			if (matrix.isOpen) {
 				matrix.close();
+				matrix.destroy();
 			}
 		}else{
 			this.log.info('disConnectMatrix() Network');
