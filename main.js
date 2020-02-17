@@ -41,6 +41,9 @@ const cmdConnect = new Buffer([0x5a, 0xa5, 0x14, 0x00, 0x40, 0x00, 0x00, 0x00, 0
 const cmdDisconnect = new Buffer([0x5a, 0xa5, 0x14, 0x01, 0x3f, 0x80, 0x00, 0x00, 0x0a, 0x5d]);
 const cmdBasicResponse = new Buffer([0x5a, 0xa5, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0x0a, 0xa9]);
 const cmdTransmissionDone = new Buffer([0x5a, 0xa5, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1, 0xf1, 0x0a, 0xaf]);
+//const cmdPreset_Init0 = new Buffer([0x5a, 0xa5, 0x10, 0x11, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xaf]);	/* Preset to load after PowerOn */
+//const cmdPreset_Save0 = new Buffer([0x5a, 0xa5, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xaf]);	/* Preset to save settings to */
+
 const cmdVol000 = new Buffer([0x5a, 0xa5, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x10]);
 const cmdWaitQueue_1000 = new Buffer([0x03, 0xe8]);
 
@@ -167,17 +170,17 @@ class Test extends utils.Adapter {
 		this.connectMatrix();
 	}
 
-	disconnectMatrix() {		
+	disconnectMatrix() {
 		if (bSerialCommunication == true) {
 			this.log.info('disConnectMatrix() Serial');
 			if (matrix.isOpen) {
 				matrix.close();
 				matrix.destroy();
 			}
-		}else{
+		} else {
 			this.log.info('disConnectMatrix() Network');
 			matrix.destroy();
-		}	
+		}
 	}
 
 	connectMatrix(cb) {
@@ -239,12 +242,12 @@ class Test extends utils.Adapter {
 
 
 		matrix.on('data', function (chunk) {
-			if(bSerialCommunication==false){
+			if (bSerialCommunication == false) {
 				parentThis.processIncoming(chunk);
 			}
 			//parentThis.log.info('matrix.onData()');
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
-			
+
 		});
 
 		matrix.on('timeout', function (e) {
@@ -292,7 +295,7 @@ class Test extends utils.Adapter {
 		parser.on('data', function (chunk) {
 			//parentThis.log.info('matrix.onData()');
 			//parentThis.log.info('matrix.onData(): ' + parentThis.toHexString(chunk) );
-			if(bSerialCommunication==true){
+			if (bSerialCommunication == true) {
 				parentThis.processIncoming(chunk);
 			}
 			//parentThis.processIncoming(chunk);
@@ -362,6 +365,8 @@ class Test extends utils.Adapter {
 				idVal -= 1;
 				//----0-indexed
 				this._changeMuting(idVal, val);
+			} else if(id.toUpperCase().includes('SAVETOPRESET0')){
+				this.saveToPreset_0();
 			}
 		} else {
 			//----Won't happen. If we are connected to this adapter then it's impossible to change attributes from the
@@ -555,6 +560,29 @@ class Test extends utils.Adapter {
 		this._createState_Muting();
 		this._createState_outputGain_Display();
 		this._createState_Labels();
+		this._createState_Save();
+	}
+
+	//----Shich Preset to load at Startup
+	setInitialPreset() {
+		let tmpCMD = new Buffer([0x5a, 0xa5, 0x10, 0x11 /*initial mode*/, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xaf]); /* Preset 0 */
+
+		//----fix checksum
+		tmpCMD = convertArray(tmpCMD);
+
+		arrCMD.push(tmpCMD);
+	}
+
+	//----Save active settings to preset #0
+	saveToPreset_0() {
+		this.log.info('saveToPreset_0');
+		let tmpCMD = new Buffer([0x5a, 0xa5, 0x10, 0x10 /*safe mode*/, 0x00, 0x00, 0x00, 0x00, 0x0a, 0xaf]);
+
+		//----fix checksum
+		tmpCMD = convertArray(tmpCMD);
+
+		arrCMD.push(tmpCMD);
+		arrCMD.push(cmdWaitQueue_1000);
 	}
 
 	//----Sendet die Befehle zum Setzen des korrekten Datums an die Matrix
@@ -834,6 +862,20 @@ class Test extends utils.Adapter {
 
 	}
 
+	async _createState_Save() {
+		parentThis.log.info('createStates(): Save');
+		await this.setObjectAsync('saveToPreset0', {
+			type: 'state',
+			common: {
+				name: 'save settings to preset 0',
+				type: 'boolean',
+				role: 'indicator',
+				read: true,
+				write: true,
+			},
+			native: {},
+		});
+	}
 
 	pingMatrix() {
 		if ((bConnection == true)/*&&(bWaitingForResponse==false)*/ && (bWaitQueue == false)) {
@@ -845,6 +887,7 @@ class Test extends utils.Adapter {
 					//----Ab jetzt nicht mehr
 					bFirstPing = false;
 					this.setDate();
+					this.setInitialPreset();
 				}
 			}
 		} else {
