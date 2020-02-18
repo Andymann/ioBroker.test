@@ -1080,7 +1080,7 @@ class Test extends utils.Adapter {
 
 	//----After 'Transmission Done' is received 
 	//----We organize the internal states to reflect the hardware's situation.
-	async processExclusiveRoutingStates() {
+	processExclusiveRoutingStates() {
 		this.log.info('processExclusiveRoutingStates()');
 
 		for (let i = 0; i < 8; i++) {
@@ -1098,10 +1098,10 @@ class Test extends utils.Adapter {
 				sOut = (o + 1).toString();
 				if (arrRouting[iID] == true) {
 					this.log.info('processExclusiveRoutingStates() State is TRUE for ID ' + iID.toString());
-					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
+					/*await*/ this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: true, ack: true });
 				} else {
 					this.log.info('processExclusiveRoutingStates() State is FALSE for ID ' + iID.toString());
-					await this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: false, ack: true });
+					/*await*/ this.setStateAsync('routingNode_Exclusive_ID_' + sID + '__IN_' + sIn + '_OUT_' + sOut, { val: false, ack: true });
 				}
 			}
 			/*
