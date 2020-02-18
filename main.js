@@ -888,7 +888,7 @@ class Test extends utils.Adapter {
 					bFirstPing = false;
 					this.setDate();
 					this.setInitialPreset();
-					this.processExclusiveRoutingStates();
+					//this.processExclusiveRoutingStates();
 				}
 			}
 		} else {
